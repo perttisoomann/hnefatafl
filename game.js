@@ -32,12 +32,29 @@ class GameBoard {
         };
     }
 
-    highlightTiles(positions) {
+    highlightTiles(positions, piece) {
         this.clearHighlights();
         positions.forEach(([row, col]) => {
             if (row >= 0 && row < this.rows && col >= 0 && col < this.cols) {
                 let { x, y } = this.getTilePosition(row, col);
-                this.tiles[row][col].highlight = this.scene.add.rectangle(x, y, this.tileSize, this.tileSize, 0x00ff00, 0.5);
+                this.tiles[row][col].highlight = this.scene.add.rectangle(x, y, this.tileSize, this.tileSize, 0x00ff00, 0.3);
+
+                // Make the highlight interactive
+                this.tiles[row][col].highlight.setInteractive();
+
+                // Add hover effects
+                this.tiles[row][col].highlight.on('pointerover', () => {
+                    this.tiles[row][col].highlight.fillAlpha = 0.7;
+                });
+
+                this.tiles[row][col].highlight.on('pointerout', () => {
+                    this.tiles[row][col].highlight.fillAlpha = 0.3;
+                });
+
+                // Add click event to move the piece
+                this.tiles[row][col].highlight.on('pointerdown', () => {
+                    this.scene.movePiece(piece, row, col);
+                });
             }
         });
     }
@@ -185,7 +202,54 @@ class VikingChess extends Phaser.Scene {
         }
         this.selectedPiece = piece;
         this.selectedPiece.sprite.setTint(0xffff00);
-        this.board.highlightTiles(piece.getValidMoves());
+        this.board.highlightTiles(piece.getValidMoves(), piece);
+    }
+
+    movePiece(piece, newRow, newCol) {
+        if (!this.selectedPiece) return;
+
+        // Update the board data
+        this.board.tiles[piece.row][piece.col].piece = null;
+        this.board.tiles[newRow][newCol].piece = piece;
+
+        // Update piece position
+        piece.row = newRow;
+        piece.col = newCol;
+
+        // Move the sprite
+        let { x, y } = this.board.getTilePosition(newRow, newCol);
+
+        // Animate the movement
+        this.tweens.add({
+            targets: piece.sprite,
+            x: x,
+            y: y,
+            duration: 200,
+            ease: 'Power2',
+            onComplete: () => {
+                // Check for captures after the move
+                this.checkCaptures(piece);
+
+                // Clear the selection and highlights
+                this.selectedPiece.sprite.clearTint();
+                this.board.clearHighlights();
+                this.selectedPiece = null;
+
+                // Switch turns
+                this.gameState = 'enemyTurn';
+
+                // For now, let's switch back to player turn automatically
+                this.time.delayedCall(500, () => {
+                    this.gameState = 'playerTurn';
+                });
+            }
+        });
+    }
+
+    checkCaptures(piece) {
+        // This will be implemented later
+        // For now, it's just a placeholder
+        console.log("Checking for captures");
     }
 }
 
