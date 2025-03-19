@@ -69,6 +69,23 @@ class GameBoard {
             }
         }
     }
+
+    // Add cleanup method to destroy all board elements
+    cleanup() {
+        for (let row = 0; row < this.rows; row++) {
+            for (let col = 0; col < this.cols; col++) {
+                if (this.tiles[row][col].highlight) {
+                    this.tiles[row][col].highlight.destroy();
+                }
+                if (this.tiles[row][col].tile) {
+                    this.tiles[row][col].tile.destroy();
+                }
+                if (this.tiles[row][col].modifier) {
+                    this.tiles[row][col].modifier.destroy();
+                }
+            }
+        }
+    }
 }
 
 class Piece {
@@ -106,6 +123,13 @@ class Piece {
             moves.push([this.row, j]);
         }
         return moves;
+    }
+
+    // Add cleanup method to destroy the sprite
+    cleanup() {
+        if (this.sprite) {
+            this.sprite.destroy();
+        }
     }
 }
 
@@ -153,6 +177,7 @@ class VikingChess extends Phaser.Scene {
         this.gameState = 'playerTurn';
         this.selectedPiece = null;
         this.statusText = null;
+        this.restartButton = null;
     }
 
     preload() {
@@ -166,6 +191,11 @@ class VikingChess extends Phaser.Scene {
     }
 
     create() {
+        this.gameState = 'playerTurn';
+        this.selectedPiece = null;
+        this.statusText = null;
+        this.restartButton = null;
+
         this.board = new GameBoard(this);
 
         this.kingPiece = new KingPiece(this, this.board, 5, 5);
@@ -554,16 +584,54 @@ class VikingChess extends Phaser.Scene {
         this.statusText.setText(message);
 
         // Add a restart button
-        const restartButton = this.add.text(
+        this.restartButton = this.add.text(
             this.cameras.main.width / 2,
             this.cameras.main.height - 50,
             'Restart Game',
             { fontSize: '24px', fill: '#fff', backgroundColor: '#333', padding: { x: 10, y: 5 } }
         ).setOrigin(0.5).setInteractive();
 
-        restartButton.on('pointerdown', () => {
+        this.restartButton.on('pointerdown', () => {
+            this.cleanup(); // Clean up all game objects
             this.scene.restart();
         });
+    }
+
+    // Add cleanup method to properly destroy all game objects
+    cleanup() {
+        // Remove all event listeners and game objects
+        if (this.restartButton) {
+            this.restartButton.destroy();
+        }
+
+        // Clean up all pieces
+        if (this.playerPieces) {
+            this.playerPieces.forEach(piece => piece.cleanup());
+        }
+
+        if (this.enemyPieces) {
+            this.enemyPieces.forEach(piece => piece.cleanup());
+        }
+
+        if (this.kingPiece) {
+            this.kingPiece.cleanup();
+        }
+
+        // Clean up the board
+        if (this.board) {
+            this.board.cleanup();
+        }
+
+        // Stop all tweens
+        this.tweens.killAll();
+
+        // Clear all timers
+        this.time.removeAllEvents();
+
+        // Remove status text
+        if (this.statusText) {
+            this.statusText.destroy();
+        }
     }
 }
 
