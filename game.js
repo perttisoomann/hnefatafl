@@ -497,12 +497,97 @@ class VikingChess extends Phaser.Scene {
                         // Don't capture the king with this method
                         if (adjacentPiece instanceof KingPiece) continue;
 
-                        // Capture the piece!
-                        this.capturePiece(adjacentPiece);
+                        // Perform attack animation with both capturing pieces!
+                        this.performAttackAnimation(piece, sandwichPiece, adjacentPiece);
                     }
                 }
             }
         }
+    }
+
+    performAttackAnimation(piece1, piece2, targetPiece) {
+        // Save original positions
+        const piece1OrigX = piece1.sprite.x;
+        const piece1OrigY = piece1.sprite.y;
+        const piece2OrigX = piece2.sprite.x;
+        const piece2OrigY = piece2.sprite.y;
+
+        // Calculate attack direction vectors
+        const p1ToTarget = {
+            x: targetPiece.sprite.x - piece1OrigX,
+            y: targetPiece.sprite.y - piece1OrigY
+        };
+
+        const p2ToTarget = {
+            x: targetPiece.sprite.x - piece2OrigX,
+            y: targetPiece.sprite.y - piece2OrigY
+        };
+
+        // Normalize and scale for thrust distance (20% of the way)
+        const thrustDistance = 0.5;
+        const p1ThrustX = piece1OrigX + (p1ToTarget.x * thrustDistance);
+        const p1ThrustY = piece1OrigY + (p1ToTarget.y * thrustDistance);
+        const p2ThrustX = piece2OrigX + (p2ToTarget.x * thrustDistance);
+        const p2ThrustY = piece2OrigY + (p2ToTarget.y * thrustDistance);
+
+        // Create blood particle emitter if not already created
+        if (!this.bloodEmitter) {
+            this.bloodEmitter = this.add.particles(0, 0, 'blood-particle', {
+                speed: { min: 50, max: 200 },
+                angle: { min: 0, max: 360 },
+                scale: { start: 0.5, end: 0.1 },
+                lifespan: 800,
+                blendMode: 'ADD',
+                gravityY: 300,
+                active: false,
+                quantity: 20
+            });
+        }
+
+        // Track completion of both animations
+        let completionCount = 0;
+
+        const createBloodEffect = () => {
+            // Shake the camera slightly
+            this.cameras.main.shake(100, 0.01);
+        };
+
+        const checkBothComplete = () => {
+            completionCount++;
+            if (completionCount === 1) {
+                // Create blood effect after first hit
+                createBloodEffect();
+            }
+            if (completionCount === 2) {
+                // Create second blood effect after second hit
+                createBloodEffect();
+                // After both attacks complete, capture the piece
+                this.capturePiece(targetPiece);
+            }
+        };
+
+        // First attacker thrusts forward (parallel)
+        this.tweens.add({
+            targets: piece1.sprite,
+            x: p1ThrustX,
+            y: p1ThrustY,
+            duration: 60,
+            ease: 'Power1',
+            yoyo: true,
+            onComplete: checkBothComplete
+        });
+
+        // Second attacker thrusts forward (parallel)
+        this.tweens.add({
+            targets: piece2.sprite,
+            x: p2ThrustX,
+            y: p2ThrustY,
+            duration: 60,
+            ease: 'Power1',
+            yoyo: true,
+            delay: 50,
+            onComplete: checkBothComplete
+        });
     }
 
     capturePiece(piece) {
