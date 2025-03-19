@@ -152,6 +152,7 @@ class VikingChess extends Phaser.Scene {
         super({ key: 'VikingChess' });
         this.gameState = 'playerTurn';
         this.selectedPiece = null;
+        this.statusText = null;
     }
 
     preload() {
@@ -191,6 +192,14 @@ class VikingChess extends Phaser.Scene {
         enemyPositions.forEach(([row, col]) => {
             this.enemyPieces.push(new EnemyPiece(this, this.board, row, col));
         });
+
+        // Add status text
+        this.statusText = this.add.text(
+            this.cameras.main.width / 2,
+            30,
+            'Player Turn',
+            { fontSize: '24px', fill: '#fff', fontFamily: 'Arial' }
+        ).setOrigin(0.5);
     }
 
     selectPiece(piece) {
@@ -235,21 +244,326 @@ class VikingChess extends Phaser.Scene {
                 this.board.clearHighlights();
                 this.selectedPiece = null;
 
+                // Check win conditions
+                if (this.checkWinConditions()) {
+                    return; // Game is over
+                }
+
                 // Switch turns
                 this.gameState = 'enemyTurn';
+                this.statusText.setText('Enemy Turn');
 
-                // For now, let's switch back to player turn automatically
-                this.time.delayedCall(500, () => {
-                    this.gameState = 'playerTurn';
-                });
+                // Enemy's turn with a slight delay
+                this.time.delayedCall(800, this.enemyTurn, [], this);
             }
         });
     }
 
+    enemyTurn() {
+        if (this.gameState !== 'enemyTurn') return;
+
+        // Find all possible moves for all enemy pieces
+        let allMoves = [];
+
+        this.enemyPieces.forEach(piece => {
+            if (!piece.sprite.active) return; // Skip captured pieces
+
+            const validMoves = piece.getValidMoves();
+            validMoves.forEach(([row, col]) => {
+                // Calculate a score for this move
+                const moveScore = this.evaluateMove(piece, row, col);
+
+                allMoves.push({
+                    piece,
+                    row,
+                    col,
+                    score: moveScore
+                });
+            });
+        });
+
+        // Sort moves by score (highest first)
+        allMoves.sort((a, b) => b.score - a.score);
+
+        if (allMoves.length > 0) {
+            // Get the best move (or one of the top moves with some randomness)
+            const randomIndex = Math.floor(Math.random() * Math.min(3, allMoves.length));
+            const selectedMove = allMoves[randomIndex];
+
+            // Execute the move
+            this.executeEnemyMove(selectedMove.piece, selectedMove.row, selectedMove.col);
+        } else {
+            // No moves available, switch back to player
+            this.gameState = 'playerTurn';
+            this.statusText.setText('Player Turn');
+        }
+    }
+
+    executeEnemyMove(piece, newRow, newCol) {
+        // Update the board data
+        this.board.tiles[piece.row][piece.col].piece = null;
+        this.board.tiles[newRow][newCol].piece = piece;
+
+        // Update piece position
+        piece.row = newRow;
+        piece.col = newCol;
+
+        // Move the sprite
+        let { x, y } = this.board.getTilePosition(newRow, newCol);
+
+        // Animate the movement
+        this.tweens.add({
+            targets: piece.sprite,
+            x: x,
+            y: y,
+            duration: 200,
+            ease: 'Power2',
+            onComplete: () => {
+                // Check for captures
+                this.checkCaptures(piece);
+
+                // Check win conditions
+                if (this.checkWinConditions()) {
+                    return; // Game is over
+                }
+
+                // Switch turns back to player
+                this.gameState = 'playerTurn';
+                this.statusText.setText('Player Turn');
+            }
+        });
+    }
+
+    evaluateMove(piece, row, col) {
+        let score = 0;
+
+        // Prioritize moves that can capture player pieces
+        const captureScore = this.canCaptureAfterMove(piece, row, col);
+        score += captureScore * 100;
+
+        // Prioritize moves toward the king
+        const distanceToKing = Math.abs(row - this.kingPiece.row) + Math.abs(col - this.kingPiece.col);
+        score += (20 - distanceToKing) * 5;
+
+        // Add some strategic positioning (center control, etc.)
+        const centerDistance = Math.abs(row - 5) + Math.abs(col - 5);
+        score += (10 - centerDistance) * 2;
+
+        // Add some randomness to avoid predictability
+        score += Math.random() * 10;
+
+        return score;
+    }
+
+    canCaptureAfterMove(piece, newRow, newCol) {
+        let captureCount = 0;
+
+        // Temporarily move the piece
+        const originalRow = piece.row;
+        const originalCol = piece.col;
+        const originalTilePiece = this.board.tiles[originalRow][originalCol].piece;
+        const targetTilePiece = this.board.tiles[newRow][newCol].piece;
+
+        // Update board data temporarily
+        this.board.tiles[originalRow][originalCol].piece = null;
+        this.board.tiles[newRow][newCol].piece = piece;
+        piece.row = newRow;
+        piece.col = newCol;
+
+        // Check for potential captures
+        // Check right
+        if (newCol < this.board.cols - 2) {
+            const rightPiece = this.board.tiles[newRow][newCol + 1].piece;
+            if (rightPiece instanceof PlayerPiece || rightPiece instanceof KingPiece) {
+                const sandwichPiece = this.board.tiles[newRow][newCol + 2].piece;
+                if (sandwichPiece instanceof EnemyPiece) {
+                    captureCount++;
+                }
+            }
+        }
+
+        // Check left
+        if (newCol >= 2) {
+            const leftPiece = this.board.tiles[newRow][newCol - 1].piece;
+            if (leftPiece instanceof PlayerPiece || leftPiece instanceof KingPiece) {
+                const sandwichPiece = this.board.tiles[newRow][newCol - 2].piece;
+                if (sandwichPiece instanceof EnemyPiece) {
+                    captureCount++;
+                }
+            }
+        }
+
+        // Check down
+        if (newRow < this.board.rows - 2) {
+            const downPiece = this.board.tiles[newRow + 1][newCol].piece;
+            if (downPiece instanceof PlayerPiece || downPiece instanceof KingPiece) {
+                const sandwichPiece = this.board.tiles[newRow + 2][newCol].piece;
+                if (sandwichPiece instanceof EnemyPiece) {
+                    captureCount++;
+                }
+            }
+        }
+
+        // Check up
+        if (newRow >= 2) {
+            const upPiece = this.board.tiles[newRow - 1][newCol].piece;
+            if (upPiece instanceof PlayerPiece || upPiece instanceof KingPiece) {
+                const sandwichPiece = this.board.tiles[newRow - 2][newCol].piece;
+                if (sandwichPiece instanceof EnemyPiece) {
+                    captureCount++;
+                }
+            }
+        }
+
+        // Restore the original board state
+        piece.row = originalRow;
+        piece.col = originalCol;
+        this.board.tiles[originalRow][originalCol].piece = originalTilePiece;
+        this.board.tiles[newRow][newCol].piece = targetTilePiece;
+
+        return captureCount;
+    }
+
     checkCaptures(piece) {
-        // This will be implemented later
-        // For now, it's just a placeholder
-        console.log("Checking for captures");
+        const directions = [
+            [0, 1],  // Right
+            [0, -1], // Left
+            [1, 0],  // Down
+            [-1, 0]  // Up
+        ];
+
+        const row = piece.row;
+        const col = piece.col;
+        const isPlayerPiece = piece instanceof PlayerPiece || piece instanceof KingPiece;
+
+        for (const [dx, dy] of directions) {
+            const checkRow = row + dx;
+            const checkCol = col + dy;
+
+            // Check if there's an adjacent piece to capture
+            if (checkRow >= 0 && checkRow < this.board.rows &&
+                checkCol >= 0 && checkCol < this.board.cols) {
+
+                const adjacentPiece = this.board.tiles[checkRow][checkCol].piece;
+
+                // Skip if no piece or piece is same type
+                if (!adjacentPiece) continue;
+                if ((isPlayerPiece && (adjacentPiece instanceof PlayerPiece || adjacentPiece instanceof KingPiece)) ||
+                    (!isPlayerPiece && adjacentPiece instanceof EnemyPiece)) continue;
+
+                // Check for sandwiching piece
+                const sandwichRow = checkRow + dx;
+                const sandwichCol = checkCol + dy;
+
+                if (sandwichRow >= 0 && sandwichRow < this.board.rows &&
+                    sandwichCol >= 0 && sandwichCol < this.board.cols) {
+
+                    const sandwichPiece = this.board.tiles[sandwichRow][sandwichCol].piece;
+
+                    // If the sandwiching piece is of the same type as the current piece
+                    if ((isPlayerPiece && (sandwichPiece instanceof PlayerPiece || sandwichPiece instanceof KingPiece)) ||
+                        (!isPlayerPiece && sandwichPiece instanceof EnemyPiece)) {
+
+                        // Don't capture the king with this method
+                        if (adjacentPiece instanceof KingPiece) continue;
+
+                        // Capture the piece!
+                        this.capturePiece(adjacentPiece);
+                    }
+                }
+            }
+        }
+    }
+
+    capturePiece(piece) {
+        // Remove from the board data
+        this.board.tiles[piece.row][piece.col].piece = null;
+
+        // Add a capture animation
+        this.tweens.add({
+            targets: piece.sprite,
+            alpha: 0,
+            scale: 0.5,
+            duration: 300,
+            onComplete: () => {
+                // Remove the sprite
+                piece.sprite.destroy();
+
+                // Remove from arrays
+                if (piece instanceof PlayerPiece) {
+                    this.playerPieces = this.playerPieces.filter(p => p !== piece);
+                } else if (piece instanceof EnemyPiece) {
+                    this.enemyPieces = this.enemyPieces.filter(p => p !== piece);
+                }
+            }
+        });
+    }
+
+    checkWinConditions() {
+        // Check if the king reached an edge (player wins)
+        if (this.kingPiece.row === 0 || this.kingPiece.row === this.board.rows - 1 ||
+            this.kingPiece.col === 0 || this.kingPiece.col === this.board.cols - 1) {
+            this.endGame("Player Wins! King escaped!");
+            return true;
+        }
+
+        // Check if king is surrounded on all four sides (enemy wins)
+        const kingRow = this.kingPiece.row;
+        const kingCol = this.kingPiece.col;
+        let surroundedCount = 0;
+
+        // Check all four directions
+        const directions = [[0, 1], [0, -1], [1, 0], [-1, 0]];
+        for (const [dx, dy] of directions) {
+            const checkRow = kingRow + dx;
+            const checkCol = kingCol + dy;
+
+            if (checkRow < 0 || checkRow >= this.board.rows ||
+                checkCol < 0 || checkCol >= this.board.cols) {
+                continue; // Out of bounds counts as not surrounded
+            }
+
+            const adjacentPiece = this.board.tiles[checkRow][checkCol].piece;
+            if (adjacentPiece instanceof EnemyPiece) {
+                surroundedCount++;
+            }
+        }
+
+        if (surroundedCount === 4) {
+            this.endGame("Enemy Wins! King is captured!");
+            return true;
+        }
+
+        // Check if player has no pieces left
+        if (this.playerPieces.length === 0) {
+            this.endGame("Enemy Wins! All defenders are captured!");
+            return true;
+        }
+
+        // Check if enemy has no pieces left
+        if (this.enemyPieces.length === 0) {
+            this.endGame("Player Wins! All attackers are defeated!");
+            return true;
+        }
+
+        return false;
+    }
+
+    endGame(message) {
+        this.gameState = 'gameOver';
+        this.statusText.setText(message);
+
+        // Add a restart button
+        const restartButton = this.add.text(
+            this.cameras.main.width / 2,
+            this.cameras.main.height - 50,
+            'Restart Game',
+            { fontSize: '24px', fill: '#fff', backgroundColor: '#333', padding: { x: 10, y: 5 } }
+        ).setOrigin(0.5).setInteractive();
+
+        restartButton.on('pointerdown', () => {
+            this.scene.restart();
+        });
     }
 }
 
