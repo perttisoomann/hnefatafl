@@ -251,21 +251,82 @@ class VikingChess extends Phaser.Scene {
         this.board.tiles[piece.row][piece.col].piece = null;
         this.board.tiles[newRow][newCol].piece = piece;
 
-        // Update piece position
-        piece.row = newRow;
-        piece.col = newCol;
+        // Get start and end positions
+        const startPos = this.board.getTilePosition(piece.row, piece.col);
+        const endPos = this.board.getTilePosition(newRow, newCol);
 
-        // Move the sprite
-        let { x, y } = this.board.getTilePosition(newRow, newCol);
+        // Calculate the path through each tile
+        const path = [];
 
-        // Animate the movement
-        this.tweens.add({
+        // Determine if moving horizontally or vertically
+        const isHorizontal = piece.row === newRow;
+
+        if (isHorizontal) {
+            // Horizontal movement
+            const direction = piece.col < newCol ? 1 : -1;
+
+            for (let col = piece.col + direction; direction > 0 ? col <= newCol : col >= newCol; col += direction) {
+                path.push(this.board.getTilePosition(piece.row, col));
+            }
+        } else {
+            // Vertical movement
+            const direction = piece.row < newRow ? 1 : -1;
+
+            for (let row = piece.row + direction; direction > 0 ? row <= newRow : row >= newRow; row += direction) {
+                path.push(this.board.getTilePosition(row, piece.col));
+            }
+        }
+
+        // Store original position and values
+        const originalY = piece.sprite.y;
+        const originalOriginY = piece.sprite.originY;
+        const pieceHeight = piece.sprite.height;
+
+        // Calculate the baseline offset (how much the bottom of the sprite will move when changing origin)
+        const baselineOffset = pieceHeight * (1 - originalOriginY - 0.5);
+
+        // Create a timeline for the movement animation
+        const timeline = this.tweens.createTimeline();
+
+        // Add hop animations through each tile in the path
+        path.forEach((pos, index) => {
+            const hopDuration = 100; // Base duration for each hop
+
+            // Add a hop tween for this tile
+            timeline.add({
+                targets: piece.sprite,
+                x: pos.x,
+                y: function(t, target, key, value, progress) {
+                    // Base y position at this point in the path
+                    const baseY = pos.y;
+
+                    // Add hop using sine curve (up to 20px at peak)
+                    const hopHeight = 20;
+                    const hop = -Math.sin(progress * Math.PI) * hopHeight;
+
+                    // Return position that keeps the base at the same level
+                    return baseY + hop;
+                },
+                rotation: {
+                    value: index % 2 === 0 ? 0.1 : -0.1, // Alternate slight rotation
+                    ease: 'Sine.easeInOut'
+                },
+                duration: hopDuration
+            });
+        });
+
+        // Add final position and rotation reset
+        timeline.add({
             targets: piece.sprite,
-            x: x,
-            y: y,
-            duration: 200,
-            ease: 'Power2',
+            x: endPos.x,
+            y: endPos.y,
+            rotation: 0,
+            duration: 100,
             onComplete: () => {
+                // Update piece position
+                piece.row = newRow;
+                piece.col = newCol;
+
                 // Check for captures after the move
                 this.checkCaptures(piece);
 
@@ -287,6 +348,9 @@ class VikingChess extends Phaser.Scene {
                 this.time.delayedCall(800, this.enemyTurn, [], this);
             }
         });
+
+        // Start the timeline
+        timeline.play();
     }
 
     enemyTurn() {
@@ -334,21 +398,74 @@ class VikingChess extends Phaser.Scene {
         this.board.tiles[piece.row][piece.col].piece = null;
         this.board.tiles[newRow][newCol].piece = piece;
 
-        // Update piece position
-        piece.row = newRow;
-        piece.col = newCol;
+        // Get start and end positions
+        const startPos = this.board.getTilePosition(piece.row, piece.col);
+        const endPos = this.board.getTilePosition(newRow, newCol);
 
-        // Move the sprite
-        let { x, y } = this.board.getTilePosition(newRow, newCol);
+        // Calculate the path through each tile
+        const path = [];
 
-        // Animate the movement
-        this.tweens.add({
+        // Determine if moving horizontally or vertically
+        const isHorizontal = piece.row === newRow;
+
+        if (isHorizontal) {
+            // Horizontal movement
+            const direction = piece.col < newCol ? 1 : -1;
+
+            for (let col = piece.col + direction; direction > 0 ? col <= newCol : col >= newCol; col += direction) {
+                path.push(this.board.getTilePosition(piece.row, col));
+            }
+        } else {
+            // Vertical movement
+            const direction = piece.row < newRow ? 1 : -1;
+
+            for (let row = piece.row + direction; direction > 0 ? row <= newRow : row >= newRow; row += direction) {
+                path.push(this.board.getTilePosition(row, piece.col));
+            }
+        }
+
+        // Create a timeline for the movement animation
+        const timeline = this.tweens.createTimeline();
+
+        // Add hop animations through each tile in the path
+        path.forEach((pos, index) => {
+            const hopDuration = 100; // Base duration for each hop
+
+            // Add a hop tween for this tile
+            timeline.add({
+                targets: piece.sprite,
+                x: pos.x,
+                y: function(t, target, key, value, progress) {
+                    // Base y position at this point in the path
+                    const baseY = pos.y;
+
+                    // Add hop using sine curve (up to 20px at peak)
+                    const hopHeight = 20;
+                    const hop = -Math.sin(progress * Math.PI) * hopHeight;
+
+                    // Return position that keeps the base at the same level
+                    return baseY + hop;
+                },
+                rotation: {
+                    value: index % 2 === 0 ? 0.1 : -0.1, // Alternate slight rotation
+                    ease: 'Sine.easeInOut'
+                },
+                duration: hopDuration
+            });
+        });
+
+        // Add final position and rotation reset
+        timeline.add({
             targets: piece.sprite,
-            x: x,
-            y: y,
-            duration: 200,
-            ease: 'Power2',
+            x: endPos.x,
+            y: endPos.y,
+            rotation: 0,
+            duration: 100,
             onComplete: () => {
+                // Update piece position
+                piece.row = newRow;
+                piece.col = newCol;
+
                 // Check for captures
                 this.checkCaptures(piece);
 
@@ -362,6 +479,9 @@ class VikingChess extends Phaser.Scene {
                 this.statusText.setText('Player Turn');
             }
         });
+
+        // Start the timeline
+        timeline.play();
     }
 
     evaluateMove(piece, row, col) {
