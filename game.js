@@ -136,6 +136,7 @@ class Piece {
 class PlayerPiece extends Piece {
     constructor(scene, board, row, col) {
         super(scene, board, row, col, 'pawn_piece');
+        this.treasure = 0; // Initialize treasure count
         this.sprite.on('pointerover', () => {
             if (scene.selectedPiece !== this) {
                 this.sprite.setTint(0x00ff00);
@@ -158,6 +159,7 @@ class EnemyPiece extends Piece {
 class KingPiece extends Piece {
     constructor(scene, board, row, col) {
         super(scene, board, row, col, 'king_piece');
+        this.treasure = 0; // Initialize treasure count
         this.sprite.on('pointerover', () => {
             if (scene.selectedPiece !== this) {
                 this.sprite.setTint(0x00ff00);
@@ -196,6 +198,7 @@ class VikingChess extends Phaser.Scene {
         this.selectedPiece = null;
         this.statusText = null;
         this.restartButton = null;
+        this.goldGroup = null; // Group to hold gold pieces
     }
 
     preload() {
@@ -214,6 +217,7 @@ class VikingChess extends Phaser.Scene {
         this.selectedPiece = null;
         this.statusText = null;
         this.restartButton = null;
+        this.goldGroup = this.add.group(); // Initialize the gold group
 
         this.board = new GameBoard(this);
 
@@ -254,6 +258,15 @@ class VikingChess extends Phaser.Scene {
         this.selectedPiece = piece;
         this.selectedPiece.sprite.setTint(0xffff00);
         this.board.highlightTiles(piece.getValidMoves(), piece);
+        this.updateStatusText(); // Update status to show treasure
+    }
+
+    updateStatusText() {
+        let text = this.gameState === 'playerTurn' ? 'Player Turn' : 'Enemy Turn';
+        if (this.selectedPiece && (this.selectedPiece instanceof PlayerPiece || this.selectedPiece instanceof KingPiece)) {
+            text += ` | Treasure: ${this.selectedPiece.treasure}`;
+        }
+        this.statusText.setText(text);
     }
 
     movePiece(piece, newRow, newCol) {
@@ -339,6 +352,11 @@ class VikingChess extends Phaser.Scene {
                 piece.row = newRow;
                 piece.col = newCol;
 
+                // Check for gold pickup
+                if (piece instanceof PlayerPiece || piece instanceof KingPiece) {
+                    this.checkGoldPickup(piece);
+                }
+
                 // Check for captures after the move
                 this.checkCaptures(piece);
 
@@ -346,6 +364,7 @@ class VikingChess extends Phaser.Scene {
                 this.selectedPiece.sprite.clearTint();
                 this.board.clearHighlights();
                 this.selectedPiece = null;
+                this.updateStatusText(); // Update status after move
 
                 // Check win conditions
                 if (this.checkWinConditions()) {
@@ -363,6 +382,24 @@ class VikingChess extends Phaser.Scene {
 
         // Start the timeline
         timeline.play();
+    }
+
+    checkGoldPickup(piece) {
+        const pieceBounds = piece.sprite.getBounds();
+        let goldToRemove = null;
+
+        this.goldGroup.getChildren().forEach(gold => {
+            const goldBounds = gold.getBounds();
+            if (Phaser.Geom.Rectangle.Overlaps(pieceBounds, goldBounds)) {
+                piece.treasure += 10;
+                goldToRemove = gold;
+            }
+        });
+
+        if (goldToRemove) {
+            this.goldGroup.remove(goldToRemove, true, true); // Remove from group and destroy
+            this.updateStatusText(); // Update the displayed treasure
+        }
     }
 
     enemyTurn() {
@@ -737,7 +774,8 @@ class VikingChess extends Phaser.Scene {
 
     spawnGold(row, col) {
         let { x, y } = this.board.getTilePosition(row, col);
-        this.add.sprite(x, y, 'gold').setOrigin(0.5).setDisplaySize(100, 100);
+        const gold = this.add.sprite(x, y, 'gold').setOrigin(0.5).setDisplaySize(this.board.tileSize * 0.6, this.board.tileSize * 0.6); // Adjust size as needed
+        this.goldGroup.add(gold);
     }
 
     checkWinConditions() {
@@ -831,6 +869,11 @@ class VikingChess extends Phaser.Scene {
         // Clean up the board
         if (this.board) {
             this.board.cleanup();
+        }
+
+        // Destroy the gold group
+        if (this.goldGroup) {
+            this.goldGroup.destroy(true, true);
         }
 
         // Stop all tweens
