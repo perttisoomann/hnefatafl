@@ -334,7 +334,13 @@ class VikingChess extends Phaser.Scene {
                     value: index % 2 === 0 ? 0.1 : -0.1, // Alternate slight rotation
                     ease: 'Sine.easeInOut'
                 },
-                duration: hopDuration
+                duration: hopDuration,
+                onComplete: () => {
+                    // Check for gold pickup
+                    if (piece instanceof PlayerPiece || piece instanceof KingPiece) {
+                        this.checkGoldPickup(piece);
+                    }
+                }
             });
         });
 
