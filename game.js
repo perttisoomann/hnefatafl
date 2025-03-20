@@ -1,5 +1,5 @@
 class GameBoard {
-    constructor(scene, rows = 11, cols = 11, tileSize = 64) {
+    constructor(scene, rows = 7, cols = 7, tileSize = 100) {
         this.scene = scene;
         this.rows = rows;
         this.cols = cols;
@@ -198,11 +198,11 @@ class VikingChess extends Phaser.Scene {
 
         this.board = new GameBoard(this);
 
-        this.kingPiece = new KingPiece(this, this.board, 5, 5);
+        this.kingPiece = new KingPiece(this, this.board, 3, 3);
 
         this.playerPieces = [];
         const playerPositions = [
-            [3, 5], [4, 4], [4, 5], [4, 6], [5, 3], [5, 4], [5, 6], [5, 7], [6, 4], [6, 5], [6, 6], [7, 5]
+            [2, 2], [2, 3], [2, 4], [3, 2], [3, 4], [4, 3]
         ];
         playerPositions.forEach(([row, col]) => {
             this.playerPieces.push(new PlayerPiece(this, this.board, row, col));
@@ -210,14 +210,7 @@ class VikingChess extends Phaser.Scene {
 
         this.enemyPieces = [];
         const enemyPositions = [
-            [0, 3], [0, 4], [0, 5], [0, 6], [0, 7],
-            [1, 5],
-            [3, 0], [4, 0], [5, 0], [6, 0], [7, 0],
-            [5, 1],
-            [3, 10], [4, 10], [5, 10], [6, 10], [7, 10],
-            [5, 9],
-            [10, 3], [10, 4], [10, 5], [10, 6], [10, 7],
-            [9, 5]
+            [0, 2], [0, 3], [0, 4], [3, 0], [3, 6], [6, 2], [6, 3], [6, 4]
         ];
         enemyPositions.forEach(([row, col]) => {
             this.enemyPieces.push(new EnemyPiece(this, this.board, row, col));
