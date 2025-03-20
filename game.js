@@ -169,6 +169,24 @@ class KingPiece extends Piece {
             }
         });
     }
+
+    getValidMoves() {
+        let moves = [];
+        const directions = [
+            [-1, -1], [-1, 0], [-1, 1],
+            [0, -1],         [0, 1],
+            [1, -1], [1, 0], [1, 1]
+        ];
+
+        directions.forEach(([dx, dy]) => {
+            let newRow = this.row + dx;
+            let newCol = this.col + dy;
+            if (newRow >= 0 && newRow < this.board.rows && newCol >= 0 && newCol < this.board.cols && !this.board.tiles[newRow][newCol].piece) {
+                moves.push([newRow, newCol]);
+            }
+        });
+        return moves;
+    }
 }
 
 class VikingChess extends Phaser.Scene {
