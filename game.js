@@ -136,7 +136,6 @@ class Piece {
 class PlayerPiece extends Piece {
     constructor(scene, board, row, col) {
         super(scene, board, row, col, 'pawn_piece');
-        this.treasure = 0; // Initialize treasure count
         this.sprite.on('pointerover', () => {
             if (scene.selectedPiece !== this) {
                 this.sprite.setTint(0x00ff00);
@@ -159,7 +158,6 @@ class EnemyPiece extends Piece {
 class KingPiece extends Piece {
     constructor(scene, board, row, col) {
         super(scene, board, row, col, 'king_piece');
-        this.treasure = 0; // Initialize treasure count
         this.sprite.on('pointerover', () => {
             if (scene.selectedPiece !== this) {
                 this.sprite.setTint(0x00ff00);
@@ -199,6 +197,7 @@ class VikingChess extends Phaser.Scene {
         this.statusText = null;
         this.restartButton = null;
         this.goldGroup = null; // Group to hold gold pieces
+        this.playerGold = 0;
     }
 
     preload() {
@@ -218,6 +217,7 @@ class VikingChess extends Phaser.Scene {
         this.statusText = null;
         this.restartButton = null;
         this.goldGroup = this.add.group(); // Initialize the gold group
+        this.playerGold = 0;
 
         this.board = new GameBoard(this);
 
@@ -263,9 +263,7 @@ class VikingChess extends Phaser.Scene {
 
     updateStatusText() {
         let text = this.gameState === 'playerTurn' ? 'Player Turn' : 'Enemy Turn';
-        if (this.selectedPiece && (this.selectedPiece instanceof PlayerPiece || this.selectedPiece instanceof KingPiece)) {
-            text += ` | Treasure: ${this.selectedPiece.treasure}`;
-        }
+        text += ` | Gold: ${this.playerGold}`;
         this.statusText.setText(text);
     }
 
@@ -391,7 +389,7 @@ class VikingChess extends Phaser.Scene {
         this.goldGroup.getChildren().forEach(gold => {
             const goldBounds = gold.getBounds();
             if (Phaser.Geom.Rectangle.Overlaps(pieceBounds, goldBounds)) {
-                piece.treasure += 10;
+                this.playerGold += 10;
                 goldToRemove = gold;
             }
         });
