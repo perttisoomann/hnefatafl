@@ -762,7 +762,7 @@ class VikingChess extends Phaser.Scene {
                     this.playerPieces = this.playerPieces.filter(p => p !== piece);
                 } else if (piece instanceof EnemyPiece) {
                     this.enemyPieces = this.enemyPieces.filter(p => p !== piece);
-                    if (Math.random() < 0.5) {
+                    if (Math.random() < 0.66) {
                         this.spawnGold(piece.row, piece.col);
                     }
                 }
