@@ -206,6 +206,7 @@ class VikingChess extends Phaser.Scene {
         this.load.image('pawn_piece', 'assets/pawn_piece.png');
         this.load.image('enemy_piece', 'assets/enemy_piece.png');
         this.load.image('king_piece', 'assets/king_piece.png');
+        this.load.image('gold', 'assets/gold.png');
     }
 
     create() {
@@ -726,9 +727,17 @@ class VikingChess extends Phaser.Scene {
                     this.playerPieces = this.playerPieces.filter(p => p !== piece);
                 } else if (piece instanceof EnemyPiece) {
                     this.enemyPieces = this.enemyPieces.filter(p => p !== piece);
+                    if (Math.random() < 0.5) {
+                        this.spawnGold(piece.row, piece.col);
+                    }
                 }
             }
         });
+    }
+
+    spawnGold(row, col) {
+        let { x, y } = this.board.getTilePosition(row, col);
+        this.add.sprite(x, y, 'gold').setOrigin(0.5).setDisplaySize(100, 100);
     }
 
     checkWinConditions() {
