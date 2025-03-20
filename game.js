@@ -530,20 +530,6 @@ class VikingChess extends Phaser.Scene {
         const p2ThrustX = piece2OrigX + (p2ToTarget.x * thrustDistance);
         const p2ThrustY = piece2OrigY + (p2ToTarget.y * thrustDistance);
 
-        // Create blood particle emitter if not already created
-        if (!this.bloodEmitter) {
-            this.bloodEmitter = this.add.particles(0, 0, 'blood-particle', {
-                speed: { min: 50, max: 200 },
-                angle: { min: 0, max: 360 },
-                scale: { start: 0.5, end: 0.1 },
-                lifespan: 800,
-                blendMode: 'ADD',
-                gravityY: 300,
-                active: false,
-                quantity: 20
-            });
-        }
-
         // Track completion of both animations
         let completionCount = 0;
 
