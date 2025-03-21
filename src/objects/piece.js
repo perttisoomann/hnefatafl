@@ -7,6 +7,7 @@ class Piece {
         let { x, y } = board.getTilePosition(row, col);
         this.sprite = scene.add.sprite(x, y, texture).setOrigin(0.5).setDisplaySize(board.tileSize, board.tileSize);
         this.health = 1;
+        this.attack = 1;
         this.sprite.setInteractive();
         this.sprite.on('pointerdown', () => scene.selectPiece(this));
 

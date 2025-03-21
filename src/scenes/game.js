@@ -132,17 +132,23 @@ class VikingChess extends Phaser.Scene {
             details = `The king must escape to the edge\nof the board to win.\n\n` +
                 `Position: (${piece.row}, ${piece.col})\n` +
                 `Experience: ${piece.xp} XP\n` +
+                `Health: ${piece.health}\n` +
+                `Attack: ${piece.attack}\n` +
                 `Movement: One space in any direction`;
         } else if (piece instanceof PlayerPiece) {
             title = 'Defender ' + piece.name;
             details = `Protect the king and capture\nenemy pieces.\n\n` +
                 `Position: (${piece.row}, ${piece.col})\n` +
                 `Experience: ${piece.xp} XP\n` +
+                `Health: ${piece.health}\n` +
+                `Attack: ${piece.attack}\n` +
                 `Movement: Any number of spaces\nhorizontally or vertically`;
         } else if (piece instanceof EnemyPiece) {
             title = 'Attacker';
             details = `Capture the king by surrounding\nit on all four sides.\n\n` +
                 `Position: (${piece.row}, ${piece.col})\n` +
+                `Health: ${piece.health}\n` +
+                `Attack: ${piece.attack}\n` +
                 `Movement: Any number of spaces\nhorizontally or vertically`;
         }
 
@@ -655,12 +661,8 @@ class VikingChess extends Phaser.Scene {
 
         // Store the attacking pieces if they're player pieces for XP gain
         const attackerPieces = [];
-        if (piece1 instanceof PlayerPiece || piece1 instanceof KingPiece) {
-            attackerPieces.push(piece1);
-        }
-        if (piece2 instanceof PlayerPiece || piece2 instanceof KingPiece) {
-            attackerPieces.push(piece2);
-        }
+        attackerPieces.push(piece1);
+        attackerPieces.push(piece2);
 
         const createBloodEffect = () => {
             // Shake the camera slightly
@@ -707,6 +709,26 @@ class VikingChess extends Phaser.Scene {
     }
 
     capturePiece(piece, attackerPieces = []) {
+
+        let maxAttack = 0;
+        attackerPieces.forEach(attacker => {
+            maxAttack = Math.max(maxAttack, attacker.attack);
+        });
+
+        // If an enemy was captured by player pieces, award XP
+        if (piece instanceof EnemyPiece && attackerPieces.length > 0) {
+            // Award XP to all player pieces involved in the capture
+            attackerPieces.forEach(attacker => {
+                attacker.gainXP();
+            });
+        }
+
+        piece.health -= maxAttack;
+
+        if (piece.health > 0) {
+            return;
+        }
+
         // If this is the currently hovered piece, hide info panel
         if (piece === this.hoveredPiece) {
             this.hideInfoPanel();
@@ -725,14 +747,6 @@ class VikingChess extends Phaser.Scene {
             onComplete: () => {
                 // Remove the sprite
                 piece.sprite.destroy();
-
-                // If an enemy was captured by player pieces, award XP
-                if (piece instanceof EnemyPiece && attackerPieces.length > 0) {
-                    // Award XP to all player pieces involved in the capture
-                    attackerPieces.forEach(attacker => {
-                        attacker.gainXP();
-                    });
-                }
 
                 // Remove from arrays
                 if (piece instanceof PlayerPiece) {
