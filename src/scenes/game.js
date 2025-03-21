@@ -128,13 +128,13 @@ class VikingChess extends Phaser.Scene {
 
         // Set text based on piece type
         if (piece instanceof KingPiece) {
-            title = 'King';
+            title = 'King ' + piece.name;
             details = `The king must escape to the edge\nof the board to win.\n\n` +
                 `Position: (${piece.row}, ${piece.col})\n` +
                 `Experience: ${piece.xp} XP\n` +
                 `Movement: One space in any direction`;
         } else if (piece instanceof PlayerPiece) {
-            title = 'Defender';
+            title = 'Defender ' + piece.name;
             details = `Protect the king and capture\nenemy pieces.\n\n` +
                 `Position: (${piece.row}, ${piece.col})\n` +
                 `Experience: ${piece.xp} XP\n` +

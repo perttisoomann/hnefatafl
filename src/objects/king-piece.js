@@ -3,6 +3,7 @@ class KingPiece extends Piece {
         super(scene, board, row, col, 'king_piece');
         this.xp = 0; // Initialize XP for king piece too
         this.xpText = null;
+        this.name = generateVikingName();
 
         this.sprite.on('pointerover', () => {
             if (scene.selectedPiece !== this) {
