@@ -1,10 +1,3 @@
-
-
-
-
-
-
-
 class VikingChess extends Phaser.Scene {
     constructor() {
         super({ key: 'VikingChess' });
@@ -14,6 +7,12 @@ class VikingChess extends Phaser.Scene {
         this.restartButton = null;
         this.goldGroup = null; // Group to hold gold pieces
         this.playerGold = 0;
+
+        // New properties for piece info display
+        this.infoPanel = null;
+        this.infoPanelTitle = null;
+        this.infoPanelImage = null;
+        this.infoPanelText = null;
     }
 
     preload() {
@@ -62,6 +61,101 @@ class VikingChess extends Phaser.Scene {
             'Player Turn',
             { fontSize: '24px', fill: '#fff', fontFamily: 'Arial' }
         ).setOrigin(0.5);
+
+        // Create info panel on the right side
+        this.createInfoPanel();
+    }
+
+    // Create the information panel
+    createInfoPanel() {
+        const panelWidth = 200;
+        const panelHeight = 300;
+        const panelX = this.cameras.main.width - panelWidth - 20;
+        const panelY = this.cameras.main.height / 2 - panelHeight / 2;
+
+        // Create panel background
+        this.infoPanel = this.add.rectangle(
+            panelX + panelWidth / 2,
+            panelY + panelHeight / 2,
+            panelWidth,
+            panelHeight,
+            0x333333,
+            0.8
+        ).setOrigin(0.5);
+
+        // Add panel title
+        this.infoPanelTitle = this.add.text(
+            panelX + panelWidth / 2,
+            panelY + 20,
+            'Piece Information',
+            { fontSize: '18px', fill: '#fff', fontFamily: 'Arial', fontWeight: 'bold' }
+        ).setOrigin(0.5);
+
+        // Add image placeholder
+        this.infoPanelImage = this.add.sprite(
+            panelX + panelWidth / 2,
+            panelY + 80,
+            'pawn_piece'
+        ).setDisplaySize(64, 64).setVisible(false);
+
+        // Add text information
+        this.infoPanelText = this.add.text(
+            panelX + 20,
+            panelY + 130,
+            'Hover over a piece\nto see information',
+            { fontSize: '16px', fill: '#fff', fontFamily: 'Arial', align: 'left', wordWrap: { width: panelWidth - 40 } }
+        );
+
+        // Initially hide the panel (set alpha to 0)
+        this.hideInfoPanel();
+    }
+
+    // Show the info panel with piece details
+    showPieceInfo(piece) {
+        // Make panel visible
+        this.infoPanel.setAlpha(1);
+        this.infoPanelTitle.setAlpha(1);
+        this.infoPanelImage.setAlpha(1);
+        this.infoPanelText.setAlpha(1);
+
+        // Update image
+        this.infoPanelImage.setTexture(piece.sprite.texture.key);
+        this.infoPanelImage.setVisible(true);
+
+        let title = '';
+        let details = '';
+
+        // Set text based on piece type
+        if (piece instanceof KingPiece) {
+            title = 'King';
+            details = `The king must escape to the edge\nof the board to win.\n\n` +
+                `Position: (${piece.row}, ${piece.col})\n` +
+                `Experience: ${piece.xp} XP\n` +
+                `Movement: One space in any direction`;
+        } else if (piece instanceof PlayerPiece) {
+            title = 'Defender';
+            details = `Protect the king and capture\nenemy pieces.\n\n` +
+                `Position: (${piece.row}, ${piece.col})\n` +
+                `Experience: ${piece.xp} XP\n` +
+                `Movement: Any number of spaces\nhorizontally or vertically`;
+        } else if (piece instanceof EnemyPiece) {
+            title = 'Attacker';
+            details = `Capture the king by surrounding\nit on all four sides.\n\n` +
+                `Position: (${piece.row}, ${piece.col})\n` +
+                `Movement: Any number of spaces\nhorizontally or vertically`;
+        }
+
+        // Update panel content
+        this.infoPanelTitle.setText(title);
+        this.infoPanelText.setText(details);
+    }
+
+    // Hide the info panel
+    hideInfoPanel() {
+        this.infoPanel.setAlpha(0.5);
+        this.infoPanelTitle.setAlpha(0.5);
+        this.infoPanelImage.setAlpha(0);
+        this.infoPanelText.setText('Hover over a piece\nto see information');
     }
 
     selectPiece(piece) {
@@ -194,6 +288,11 @@ class VikingChess extends Phaser.Scene {
                 this.selectedPiece = null;
                 this.updateStatusText(); // Update status after move
 
+                // Update info panel if piece is currently hovered
+                if (piece === this.hoveredPiece) {
+                    this.showPieceInfo(piece);
+                }
+
                 // Check win conditions
                 if (this.checkWinConditions()) {
                     return; // Game is over
@@ -210,6 +309,18 @@ class VikingChess extends Phaser.Scene {
 
         // Start the timeline
         timeline.play();
+    }
+
+    setHoveredPiece(piece) {
+        this.hoveredPiece = piece;
+        this.showPieceInfo(piece);
+    }
+
+    clearHoveredPiece(piece) {
+        if (this.hoveredPiece === piece) {
+            this.hoveredPiece = null;
+            this.hideInfoPanel();
+        }
     }
 
     checkGoldPickup(piece) {
@@ -342,6 +453,11 @@ class VikingChess extends Phaser.Scene {
                 // Update piece position
                 piece.row = newRow;
                 piece.col = newCol;
+
+                // Update info panel if piece is currently hovered
+                if (piece === this.hoveredPiece) {
+                    this.showPieceInfo(piece);
+                }
 
                 // Check for captures
                 this.checkCaptures(piece);
@@ -590,6 +706,12 @@ class VikingChess extends Phaser.Scene {
     }
 
     capturePiece(piece, attackerPieces = []) {
+        // If this is the currently hovered piece, hide info panel
+        if (piece === this.hoveredPiece) {
+            this.hideInfoPanel();
+            this.hoveredPiece = null;
+        }
+
         // Remove from the board data
         this.board.tiles[piece.row][piece.col].piece = null;
 

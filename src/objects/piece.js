@@ -9,6 +9,11 @@ class Piece {
         this.health = 1;
         this.sprite.setInteractive();
         this.sprite.on('pointerdown', () => scene.selectPiece(this));
+
+        // Add hover event listeners
+        this.sprite.on('pointerover', () => scene.setHoveredPiece(this));
+        this.sprite.on('pointerout', () => scene.clearHoveredPiece(this));
+
         board.tiles[row][col].piece = this;
     }
 
