@@ -40,7 +40,8 @@ class VikingChess extends Phaser.Scene {
 
         this.playerPieces = [];
         const playerPositions = [
-            [2, 2], [2, 3], [2, 4], [3, 2], [3, 4], [4, 3]
+            [2, 3], [3, 2], [4, 3], [3, 4], // Cardinal directions
+            [2, 2], [2, 4], [4, 2], [4, 4]  // Diagonals
         ];
         playerPositions.forEach(([row, col]) => {
             this.playerPieces.push(new PlayerPiece(this, this.board, row, col));
