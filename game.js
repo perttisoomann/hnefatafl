@@ -136,6 +136,9 @@ class Piece {
 class PlayerPiece extends Piece {
     constructor(scene, board, row, col) {
         super(scene, board, row, col, 'pawn_piece');
+        this.xp = 0; // Initialize XP counter for each player piece
+        this.xpText = null; // Will store the text object for XP display
+
         this.sprite.on('pointerover', () => {
             if (scene.selectedPiece !== this) {
                 this.sprite.setTint(0x00ff00);
@@ -146,6 +149,70 @@ class PlayerPiece extends Piece {
                 this.sprite.clearTint();
             }
         });
+
+        // Create XP text that follows the piece
+        this.createXpDisplay(scene);
+    }
+
+    createXpDisplay(scene) {
+        // Create a text object to show the XP below the piece
+        this.xpText = scene.add.text(
+            this.sprite.x,
+            this.sprite.y + this.board.tileSize / 2 + 5,
+            `XP: ${this.xp}`,
+            { fontSize: '16px', fill: '#fff', stroke: '#000', strokeThickness: 2 }
+        ).setOrigin(0.5);
+
+        // Initially hide the XP display until the piece gains XP
+        this.xpText.setAlpha(0);
+    }
+
+    updateXpDisplay() {
+        if (this.xpText) {
+            this.xpText.setText(`XP: ${this.xp}`);
+
+            // Show the XP text if the piece has gained XP
+            if (this.xp > 0) {
+                this.xpText.setAlpha(1);
+            }
+        }
+    }
+
+    gainXP() {
+        this.xp += 1;
+        this.updateXpDisplay();
+        this.showXpGainAnimation();
+    }
+
+    showXpGainAnimation() {
+        // Create a floating +1 text
+        const floatingText = this.scene.add.text(
+            this.sprite.x,
+            this.sprite.y - 20,
+            '+1',
+            { fontSize: '20px', fill: '#ffff00', stroke: '#000', strokeThickness: 3 }
+        ).setOrigin(0.5);
+
+        // Animate the text floating upward and fading out
+        this.scene.tweens.add({
+            targets: floatingText,
+            y: this.sprite.y - 60,
+            alpha: 0,
+            scale: 1.5,
+            duration: 1000,
+            ease: 'Power1',
+            onComplete: () => {
+                floatingText.destroy();
+            }
+        });
+    }
+
+    // Override the parent cleanup method to also clean up the XP text
+    cleanup() {
+        if (this.xpText) {
+            this.xpText.destroy();
+        }
+        super.cleanup();
     }
 }
 
@@ -158,6 +225,9 @@ class EnemyPiece extends Piece {
 class KingPiece extends Piece {
     constructor(scene, board, row, col) {
         super(scene, board, row, col, 'king_piece');
+        this.xp = 0; // Initialize XP for king piece too
+        this.xpText = null;
+
         this.sprite.on('pointerover', () => {
             if (scene.selectedPiece !== this) {
                 this.sprite.setTint(0x00ff00);
@@ -166,6 +236,62 @@ class KingPiece extends Piece {
         this.sprite.on('pointerout', () => {
             if (scene.selectedPiece !== this) {
                 this.sprite.clearTint();
+            }
+        });
+
+        // Create XP text for king
+        this.createXpDisplay(scene);
+    }
+
+    createXpDisplay(scene) {
+        // Create a text object to show the XP below the piece
+        this.xpText = scene.add.text(
+            this.sprite.x,
+            this.sprite.y + this.board.tileSize / 2 + 5,
+            `XP: ${this.xp}`,
+            { fontSize: '16px', fill: '#fff', stroke: '#000', strokeThickness: 2 }
+        ).setOrigin(0.5);
+
+        // Initially hide the XP display until the piece gains XP
+        this.xpText.setAlpha(0);
+    }
+
+    updateXpDisplay() {
+        if (this.xpText) {
+            this.xpText.setText(`XP: ${this.xp}`);
+
+            // Show the XP text if the piece has gained XP
+            if (this.xp > 0) {
+                this.xpText.setAlpha(1);
+            }
+        }
+    }
+
+    gainXP() {
+        this.xp += 1;
+        this.updateXpDisplay();
+        this.showXpGainAnimation();
+    }
+
+    showXpGainAnimation() {
+        // Create a floating +1 text
+        const floatingText = this.scene.add.text(
+            this.sprite.x,
+            this.sprite.y - 20,
+            '+1',
+            { fontSize: '20px', fill: '#ffff00', stroke: '#000', strokeThickness: 3 }
+        ).setOrigin(0.5);
+
+        // Animate the text floating upward and fading out
+        this.scene.tweens.add({
+            targets: floatingText,
+            y: this.sprite.y - 60,
+            alpha: 0,
+            scale: 1.5,
+            duration: 1000,
+            ease: 'Power1',
+            onComplete: () => {
+                floatingText.destroy();
             }
         });
     }
@@ -186,6 +312,14 @@ class KingPiece extends Piece {
             }
         });
         return moves;
+    }
+
+    // Override the parent cleanup method to also clean up the XP text
+    cleanup() {
+        if (this.xpText) {
+            this.xpText.destroy();
+        }
+        super.cleanup();
     }
 }
 
@@ -355,6 +489,14 @@ class VikingChess extends Phaser.Scene {
                 // Update piece position
                 piece.row = newRow;
                 piece.col = newCol;
+
+                // Update XP text position if it's a player piece
+                if ((piece instanceof PlayerPiece || piece instanceof KingPiece) && piece.xpText) {
+                    piece.xpText.setPosition(
+                        piece.sprite.x,
+                        piece.sprite.y + this.board.tileSize / 2 + 5
+                    );
+                }
 
                 // Check for gold pickup
                 if (piece instanceof PlayerPiece || piece instanceof KingPiece) {
@@ -670,8 +812,14 @@ class VikingChess extends Phaser.Scene {
                         // Don't capture the king with this method
                         if (adjacentPiece instanceof KingPiece) continue;
 
-                        // Perform attack animation with both capturing pieces!
-                        this.performAttackAnimation(piece, sandwichPiece, adjacentPiece);
+                        // Store the pieces involved in this capture for XP calculation
+                        if (isPlayerPiece && adjacentPiece instanceof EnemyPiece) {
+                            // Perform attack animation with both capturing pieces
+                            this.performAttackAnimation(piece, sandwichPiece, adjacentPiece);
+                        } else {
+                            // Enemy capturing player piece
+                            this.performAttackAnimation(piece, sandwichPiece, adjacentPiece);
+                        }
                     }
                 }
             }
@@ -706,6 +854,15 @@ class VikingChess extends Phaser.Scene {
         // Track completion of both animations
         let completionCount = 0;
 
+        // Store the attacking pieces if they're player pieces for XP gain
+        const attackerPieces = [];
+        if (piece1 instanceof PlayerPiece || piece1 instanceof KingPiece) {
+            attackerPieces.push(piece1);
+        }
+        if (piece2 instanceof PlayerPiece || piece2 instanceof KingPiece) {
+            attackerPieces.push(piece2);
+        }
+
         const createBloodEffect = () => {
             // Shake the camera slightly
             this.cameras.main.shake(100, 0.01);
@@ -720,8 +877,9 @@ class VikingChess extends Phaser.Scene {
             if (completionCount === 2) {
                 // Create second blood effect after second hit
                 createBloodEffect();
+
                 // After both attacks complete, capture the piece
-                this.capturePiece(targetPiece);
+                this.capturePiece(targetPiece, attackerPieces);
             }
         };
 
@@ -749,7 +907,7 @@ class VikingChess extends Phaser.Scene {
         });
     }
 
-    capturePiece(piece) {
+    capturePiece(piece, attackerPieces = []) {
         // Remove from the board data
         this.board.tiles[piece.row][piece.col].piece = null;
 
@@ -762,6 +920,14 @@ class VikingChess extends Phaser.Scene {
             onComplete: () => {
                 // Remove the sprite
                 piece.sprite.destroy();
+
+                // If an enemy was captured by player pieces, award XP
+                if (piece instanceof EnemyPiece && attackerPieces.length > 0) {
+                    // Award XP to all player pieces involved in the capture
+                    attackerPieces.forEach(attacker => {
+                        attacker.gainXP();
+                    });
+                }
 
                 // Remove from arrays
                 if (piece instanceof PlayerPiece) {
