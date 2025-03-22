@@ -81,21 +81,80 @@ class VikingChess extends Phaser.Scene {
         this.hideInfoPanel();
     }
 
-    // Process passive effects for player's turn
     processPassivePlayerTurn() {
         if (this.gameState !== 'passivePlayerTurn') return;
 
         this.statusText.setText('Passive Player Turn');
 
-        // Here you can add any passive effects that happen at the start of player's turn
-        // For example:
-        // - Regeneration effects
-        // - Status effect processing
-        // - Automatic piece movements
-        // - Field effects
+        // Check for any enemy pieces that are sandwiched between player pieces
+        let capturesFound = false;
 
-        // For demonstration, we'll add a small delay to show the passive turn state
-        this.time.delayedCall(500, () => {
+        // Check all enemy pieces
+        for (const enemyPiece of this.enemyPieces) {
+            if (!enemyPiece.sprite || !enemyPiece.sprite.active) continue;
+
+            const row = enemyPiece.row;
+            const col = enemyPiece.col;
+
+            // Check all four directions for sandwich captures
+            const directions = [
+                [0, 1],  // Right
+                [0, -1], // Left
+                [1, 0],  // Down
+                [-1, 0]  // Up
+            ];
+
+            for (const [dx, dy] of directions) {
+                // Check first side
+                const side1Row = row - dx;
+                const side1Col = col - dy;
+
+                // Check second side
+                const side2Row = row + dx;
+                const side2Col = col + dy;
+
+                // Make sure both sides are within bounds
+                if (side1Row < 0 || side1Row >= this.board.rows ||
+                    side1Col < 0 || side1Col >= this.board.cols ||
+                    side2Row < 0 || side2Row >= this.board.rows ||
+                    side2Col < 0 || side2Col >= this.board.cols) {
+                    continue;
+                }
+
+                // Get pieces on both sides
+                const side1Piece = this.board.tiles[side1Row][side1Col].piece;
+                const side2Piece = this.board.tiles[side2Row][side2Col].piece;
+
+                // Check if enemy is sandwiched between player pieces
+                if ((side1Piece instanceof PlayerPiece || side1Piece instanceof KingPiece) &&
+                    (side2Piece instanceof PlayerPiece || side2Piece instanceof KingPiece)) {
+
+                    capturesFound = true;
+
+                    // Store the pieces involved for XP calculation
+                    const attackerPieces = [side1Piece, side2Piece];
+
+                    // First show the attack animation
+                    this.time.delayedCall(500, () => {
+                        this.performAttackAnimation(side1Piece, side2Piece, enemyPiece);
+                    });
+
+                    // We found a sandwich capture - break out of directions loop
+                    break;
+                }
+            }
+
+            if (capturesFound) {
+                // Only handle one capture per passive turn to make it more visible
+                break;
+            }
+        }
+
+        // Use a delayed call to transition to player turn after passive effects
+        // Add a longer delay if captures were found to allow animations to complete
+        const delayTime = capturesFound ? 1000 : 500;
+
+        this.time.delayedCall(delayTime, () => {
             // After passive effects, transition to active player turn
             this.gameState = 'playerTurn';
             this.statusText.setText('Player Turn');
@@ -109,17 +168,83 @@ class VikingChess extends Phaser.Scene {
 
         this.statusText.setText('Passive Enemy Turn');
 
-        // Here you can add any passive effects that happen at the start of enemy's turn
-        // For example:
-        // - Enemy regeneration
-        // - Enemy status effects
-        // - Map hazards that trigger on enemy turn
+        // Check for any player pieces that are sandwiched between enemy pieces
+        let capturesFound = false;
 
-        // For demonstration, we'll add a small delay to show the passive turn state
-        this.time.delayedCall(500, () => {
+        // Check all player pieces (including king)
+        const allPlayerPieces = [...this.playerPieces];
+        if (this.kingPiece && this.kingPiece.sprite && this.kingPiece.sprite.active) {
+            allPlayerPieces.push(this.kingPiece);
+        }
+
+        // Check each player piece
+        for (const playerPiece of allPlayerPieces) {
+            if (!playerPiece.sprite || !playerPiece.sprite.active) continue;
+
+            const row = playerPiece.row;
+            const col = playerPiece.col;
+
+            // Check all four directions for sandwich captures
+            const directions = [
+                [0, 1],  // Right
+                [0, -1], // Left
+                [1, 0],  // Down
+                [-1, 0]  // Up
+            ];
+
+            for (const [dx, dy] of directions) {
+                // Check first side
+                const side1Row = row - dx;
+                const side1Col = col - dy;
+
+                // Check second side
+                const side2Row = row + dx;
+                const side2Col = col + dy;
+
+                // Make sure both sides are within bounds
+                if (side1Row < 0 || side1Row >= this.board.rows ||
+                    side1Col < 0 || side1Col >= this.board.cols ||
+                    side2Row < 0 || side2Row >= this.board.rows ||
+                    side2Col < 0 || side2Col >= this.board.cols) {
+                    continue;
+                }
+
+                // Get pieces on both sides
+                const side1Piece = this.board.tiles[side1Row][side1Col].piece;
+                const side2Piece = this.board.tiles[side2Row][side2Col].piece;
+
+                // Check if player is sandwiched between enemy pieces
+                if (side1Piece instanceof EnemyPiece && side2Piece instanceof EnemyPiece) {
+                    capturesFound = true;
+
+                    // Store the pieces involved for attack calculation
+                    const attackerPieces = [side1Piece, side2Piece];
+
+                    // First show the attack animation
+                    this.time.delayedCall(500, () => {
+                        this.performAttackAnimation(side1Piece, side2Piece, playerPiece);
+                    });
+
+                    // We found a sandwich capture - break out of directions loop
+                    break;
+                }
+            }
+
+            if (capturesFound) {
+                // Only handle one capture per passive turn to make it more visible
+                break;
+            }
+        }
+
+        // Use a delayed call to transition to enemy turn after passive effects
+        // Add a longer delay if captures were found to allow animations to complete
+        const delayTime = capturesFound ? 1000 : 500;
+
+        this.time.delayedCall(delayTime, () => {
             // After passive effects, transition to active enemy turn
             this.gameState = 'enemyTurn';
             this.statusText.setText('Enemy Turn');
+            this.updateStatusText();
 
             // Start enemy turn with a slight delay
             this.time.delayedCall(800, this.enemyTurn, [], this);
