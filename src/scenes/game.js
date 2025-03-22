@@ -21,8 +21,12 @@ class VikingChess extends Phaser.Scene {
             frameHeight: 94
         });
         this.load.image('pawn_piece', 'assets/pawn_piece.png');
+        this.load.image('pawn_piece_level2', 'assets/pawn_piece_level2.png');
+        this.load.image('pawn_piece_level3', 'assets/pawn_piece_level3.png');
         this.load.image('enemy_piece', 'assets/enemy_piece.png');
         this.load.image('king_piece', 'assets/king_piece.png');
+        this.load.image('king_piece_level2', 'assets/king_piece_level2.png');
+        this.load.image('king_piece_level3', 'assets/king_piece_level3.png');
         this.load.image('gold', 'assets/gold.png');
     }
 

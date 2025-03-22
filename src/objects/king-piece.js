@@ -1,4 +1,4 @@
-class KingPiece extends Piece {
+class KingPiece extends PlayerPiece {
     constructor(scene, board, row, col) {
         super(scene, board, row, col, 'king_piece');
         this.xp = 0; // Initialize XP for king piece too
@@ -15,62 +15,14 @@ class KingPiece extends Piece {
                 this.sprite.clearTint();
             }
         });
-
-        // Create XP text for king
-        this.createXpDisplay(scene);
     }
 
-    createXpDisplay(scene) {
-        // Create a text object to show the XP below the piece
-        this.xpText = scene.add.text(
-            this.sprite.x,
-            this.sprite.y + this.board.tileSize / 2 + 5,
-            `XP: ${this.xp}`,
-            { fontSize: '16px', fill: '#fff', stroke: '#000', strokeThickness: 2 }
-        ).setOrigin(0.5);
-
-        // Initially hide the XP display until the piece gains XP
-        this.xpText.setAlpha(0);
-    }
-
-    updateXpDisplay() {
-        if (this.xpText) {
-            this.xpText.setText(`XP: ${this.xp}`);
-
-            // Show the XP text if the piece has gained XP
-            if (this.xp > 0) {
-                this.xpText.setAlpha(1);
-            }
-        }
-    }
-
-    gainXP() {
-        this.xp += 1;
-        this.updateXpDisplay();
-        this.showXpGainAnimation();
-    }
-
-    showXpGainAnimation() {
-        // Create a floating +1 text
-        const floatingText = this.scene.add.text(
-            this.sprite.x,
-            this.sprite.y - 20,
-            '+1',
-            { fontSize: '20px', fill: '#ffff00', stroke: '#000', strokeThickness: 3 }
-        ).setOrigin(0.5);
-
-        // Animate the text floating upward and fading out
-        this.scene.tweens.add({
-            targets: floatingText,
-            y: this.sprite.y - 60,
-            alpha: 0,
-            scale: 1.5,
-            duration: 1000,
-            ease: 'Power1',
-            onComplete: () => {
-                floatingText.destroy();
-            }
-        });
+    getLevelConfig() {
+        return {
+            1: { xpRequired: 0, texture: 'king_piece', bonus: {} },
+            2: { xpRequired: 4, texture: 'king_piece_level2', bonus: { health: 2, moveRange: 1 } },
+            3: { xpRequired: 8, texture: 'king_piece_level3', bonus: { attack: 2, health: 1, moveRange: 2 } },
+        };
     }
 
     getValidMoves() {
@@ -89,13 +41,5 @@ class KingPiece extends Piece {
             }
         });
         return moves;
-    }
-
-    // Override the parent cleanup method to also clean up the XP text
-    cleanup() {
-        if (this.xpText) {
-            this.xpText.destroy();
-        }
-        super.cleanup();
     }
 }

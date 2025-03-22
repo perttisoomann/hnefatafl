@@ -7,10 +7,12 @@ function generateVikingName() {
 }
 
 class PlayerPiece extends Piece {
-    constructor(scene, board, row, col) {
-        super(scene, board, row, col, 'pawn_piece');
-        this.xp = 0; // Initialize XP counter for each player piece
+    constructor(scene, board, row, col, texture) {
+        super(scene, board, row, col, texture ?? 'pawn_piece');
+        this.xp = 0;
+        this.level = 1;
         this.name = generateVikingName();
+        this.levelConfig = this.getLevelConfig(); // Get piece-specific level config
 
         this.sprite.on('pointerover', () => {
             if (scene.selectedPiece !== this) {
@@ -24,13 +26,53 @@ class PlayerPiece extends Piece {
         });
     }
 
+    getLevelConfig() {
+        // Base level config, can be overridden by subclasses
+        return {
+            1: { xpRequired: 0, texture: 'pawn_piece', bonus: {} },
+            2: { xpRequired: 3, texture: 'pawn_piece_level2', bonus: { health: 1 } },
+            3: { xpRequired: 6, texture: 'pawn_piece_level3', bonus: { attack: 1, moveRange: 1 } },
+            // Add more levels as needed
+        };
+    }
+
     gainXP() {
         this.xp += 1;
+        this.checkLevelUp();
         this.showXpGainAnimation();
     }
 
+    checkLevelUp() {
+        const nextLevel = this.level + 1;
+        if (this.levelConfig[nextLevel] && this.xp >= this.levelConfig[nextLevel].xpRequired) {
+            this.levelUp(nextLevel);
+        }
+    }
+
+    levelUp(newLevel) {
+        const config = this.levelConfig[newLevel];
+        if (!config) return; // Invalid level
+
+        this.level = newLevel;
+        this.sprite.setTexture(config.texture);
+        this.applyBonus(config.bonus);
+        this.showLevelUpAnimation();
+    }
+
+    applyBonus(bonus) {
+        // Apply level bonuses, extend in subclasses for specific bonuses
+        if (bonus.health) {
+            this.health = (this.health || 1) + bonus.health;
+        }
+        if (bonus.attack) {
+            this.attack = (this.attack || 1) + bonus.attack;
+        }
+        if (bonus.moveRange) {
+            this.moveRange = (this.moveRange || 1) + bonus.moveRange;
+        }
+    }
+
     showXpGainAnimation() {
-        // Create a floating +1 text
         const floatingText = this.scene.add.text(
             this.sprite.x,
             this.sprite.y - 20,
@@ -38,7 +80,6 @@ class PlayerPiece extends Piece {
             { fontSize: '20px', fill: '#ffff00', stroke: '#000', strokeThickness: 3 }
         ).setOrigin(0.5);
 
-        // Animate the text floating upward and fading out
         this.scene.tweens.add({
             targets: floatingText,
             y: this.sprite.y - 60,
@@ -50,5 +91,26 @@ class PlayerPiece extends Piece {
                 floatingText.destroy();
             }
         });
+    }
+
+    showLevelUpAnimation() {
+        //Add animation for level up here, for example particle effect, or different text animation.
+        const levelUpText = this.scene.add.text(
+            this.sprite.x,
+            this.sprite.y - 40,
+            `Level Up!`,
+            {fontSize: '24px', fill: '#00ff00', stroke: '#000', strokeThickness: 3}
+        ).setOrigin(0.5);
+
+        this.scene.tweens.add({
+            targets: levelUpText,
+            y: this.sprite.y - 80,
+            alpha: 0,
+            duration: 2500,
+            ease: 'Power2',
+            onComplete: () =>{
+                levelUpText.destroy();
+            }
+        })
     }
 }
