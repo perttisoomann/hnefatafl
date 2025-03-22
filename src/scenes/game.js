@@ -401,9 +401,6 @@ class VikingChess extends Phaser.Scene {
                     this.checkGoldPickup(piece);
                 }
 
-                // Check for captures after the move
-                this.checkCaptures(piece);
-
                 // Clear the selection and highlights
                 this.selectedPiece.sprite.clearTint();
                 this.board.clearHighlights();
@@ -415,18 +412,125 @@ class VikingChess extends Phaser.Scene {
                     this.showPieceInfo(piece);
                 }
 
-                // Check win conditions
-                if (this.checkWinConditions()) {
-                    return; // Game is over
-                }
+                // Flag to track if captures are in progress
+                let capturesInProgress = false;
+                let captureAnimationComplete = false;
 
-                // Switch turns - now go to passiveEnemyTurn instead of directly to enemyTurn
-                this.gameState = 'passiveEnemyTurn';
-                this.statusText.setText('Passive Enemy Turn');
-                this.updateStatusText();
+                // Create a modified checkCaptures that tracks completion
+                const checkCapturesWithCallback = () => {
+                    const directions = [
+                        [0, 1],  // Right
+                        [0, -1], // Left
+                        [1, 0],  // Down
+                        [-1, 0]  // Up
+                    ];
 
-                // Process passive enemy turn effects
-                this.processPassiveEnemyTurn();
+                    const row = piece.row;
+                    const col = piece.col;
+                    const isPlayerPiece = piece instanceof PlayerPiece || piece instanceof KingPiece;
+
+                    // First check if any captures will be performed
+                    let willCaptureAny = false;
+
+                    for (const [dx, dy] of directions) {
+                        const checkRow = row + dx;
+                        const checkCol = col + dy;
+
+                        // Check if there's an adjacent piece to capture
+                        if (checkRow >= 0 && checkRow < this.board.rows &&
+                            checkCol >= 0 && checkCol < this.board.cols) {
+
+                            const adjacentPiece = this.board.tiles[checkRow][checkCol].piece;
+
+                            // Skip if no piece or piece is same type
+                            if (!adjacentPiece) continue;
+                            if ((isPlayerPiece && (adjacentPiece instanceof PlayerPiece || adjacentPiece instanceof KingPiece)) ||
+                                (!isPlayerPiece && adjacentPiece instanceof EnemyPiece)) continue;
+
+                            // Don't capture the king with this method
+                            if (adjacentPiece instanceof KingPiece) continue;
+
+                            // Check for sandwiching piece
+                            const sandwichRow = checkRow + dx;
+                            const sandwichCol = checkCol + dy;
+
+                            if (sandwichRow >= 0 && sandwichRow < this.board.rows &&
+                                sandwichCol >= 0 && sandwichCol < this.board.cols) {
+
+                                const sandwichPiece = this.board.tiles[sandwichRow][sandwichCol].piece;
+
+                                // If the sandwiching piece is of the same type as the current piece
+                                if ((isPlayerPiece && (sandwichPiece instanceof PlayerPiece || sandwichPiece instanceof KingPiece)) ||
+                                    (!isPlayerPiece && sandwichPiece instanceof EnemyPiece)) {
+
+                                    willCaptureAny = true;
+                                    break;
+                                }
+                            }
+                        }
+                    }
+
+                    // If we're not capturing anything, proceed directly to next steps
+                    if (!willCaptureAny) {
+                        proceedAfterCaptures();
+                        return;
+                    }
+
+                    // If we are capturing, set flag and create a timeout
+                    capturesInProgress = true;
+
+                    // Now perform the actual captures
+                    this.checkCaptures(piece);
+
+                    // Set a timeout for when animations should be complete
+                    // This is a fallback in case capture animations don't trigger completion
+                    this.time.delayedCall(1200, () => {
+                        if (capturesInProgress) {
+                            capturesInProgress = false;
+                            proceedAfterCaptures();
+                        }
+                    });
+                };
+
+                // Function to call after captures are complete
+                const proceedAfterCaptures = () => {
+                    // Check win conditions
+                    if (this.checkWinConditions()) {
+                        return; // Game is over
+                    }
+
+                    // Switch turns - now go to passiveEnemyTurn instead of directly to enemyTurn
+                    this.gameState = 'passiveEnemyTurn';
+                    this.statusText.setText('Passive Enemy Turn');
+                    this.updateStatusText();
+
+                    // Process passive enemy turn effects
+                    this.processPassiveEnemyTurn();
+                };
+
+                // Hook into the performAttackAnimation method to track completions
+                const originalPerformAttackAnimation = this.performAttackAnimation;
+                this.performAttackAnimation = (piece1, piece2, targetPiece) => {
+                    capturesInProgress = true;
+
+                    // Call original method
+                    originalPerformAttackAnimation.call(this, piece1, piece2, targetPiece);
+
+                    // After a reasonable delay that covers animations, proceed
+                    this.time.delayedCall(800, () => {
+                        capturesInProgress = false;
+                        // If no more captures are in progress, proceed
+                        proceedAfterCaptures();
+                    });
+                };
+
+                // Start the capture checks
+                checkCapturesWithCallback();
+
+                // Restore original method
+                this.time.delayedCall(1500, () => {
+                    this.performAttackAnimation = originalPerformAttackAnimation;
+                });
             }
         });
 
