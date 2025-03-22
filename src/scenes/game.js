@@ -26,7 +26,7 @@ class VikingChess extends Phaser.Scene {
     }
 
     create() {
-        this.gameState = 'playerTurn';
+        this.gameState = 'passivePlayerTurn'; // Changed to start with passive player turn
         this.selectedPiece = null;
         this.statusText = null;
         this.restartButton = null;
@@ -58,12 +58,15 @@ class VikingChess extends Phaser.Scene {
         this.statusText = this.add.text(
             this.cameras.main.width / 2,
             30,
-            'Player Turn',
+            'Passive Player Turn',
             { fontSize: '24px', fill: '#fff', fontFamily: 'Arial' }
         ).setOrigin(0.5);
 
         // Create info panel on the right side
         this.createInfoPanel();
+
+        // Process the passive player turn as soon as the game starts
+        this.processPassivePlayerTurn();
     }
 
     // Create the information panel
@@ -78,7 +81,52 @@ class VikingChess extends Phaser.Scene {
         this.hideInfoPanel();
     }
 
-    // Show the info panel with piece details
+    // Process passive effects for player's turn
+    processPassivePlayerTurn() {
+        if (this.gameState !== 'passivePlayerTurn') return;
+
+        this.statusText.setText('Passive Player Turn');
+
+        // Here you can add any passive effects that happen at the start of player's turn
+        // For example:
+        // - Regeneration effects
+        // - Status effect processing
+        // - Automatic piece movements
+        // - Field effects
+
+        // For demonstration, we'll add a small delay to show the passive turn state
+        this.time.delayedCall(500, () => {
+            // After passive effects, transition to active player turn
+            this.gameState = 'playerTurn';
+            this.statusText.setText('Player Turn');
+            this.updateStatusText();
+        }, [], this);
+    }
+
+    // Process passive effects for enemy's turn
+    processPassiveEnemyTurn() {
+        if (this.gameState !== 'passiveEnemyTurn') return;
+
+        this.statusText.setText('Passive Enemy Turn');
+
+        // Here you can add any passive effects that happen at the start of enemy's turn
+        // For example:
+        // - Enemy regeneration
+        // - Enemy status effects
+        // - Map hazards that trigger on enemy turn
+
+        // For demonstration, we'll add a small delay to show the passive turn state
+        this.time.delayedCall(500, () => {
+            // After passive effects, transition to active enemy turn
+            this.gameState = 'enemyTurn';
+            this.statusText.setText('Enemy Turn');
+
+            // Start enemy turn with a slight delay
+            this.time.delayedCall(800, this.enemyTurn, [], this);
+        }, [], this);
+    }
+
+    // Show the info panel with piece details - Unchanged
     showPieceInfo(piece) {
         this.infoPanel.show(piece);
     }
@@ -102,7 +150,26 @@ class VikingChess extends Phaser.Scene {
     }
 
     updateStatusText() {
-        let text = this.gameState === 'playerTurn' ? 'Player Turn' : 'Enemy Turn';
+        let text = '';
+
+        // Set text based on current game state
+        switch(this.gameState) {
+            case 'passivePlayerTurn':
+                text = 'Passive Player Turn';
+                break;
+            case 'playerTurn':
+                text = 'Player Turn';
+                break;
+            case 'passiveEnemyTurn':
+                text = 'Passive Enemy Turn';
+                break;
+            case 'enemyTurn':
+                text = 'Enemy Turn';
+                break;
+            default:
+                text = this.gameState;
+        }
+
         text += ` | Gold: ${this.playerGold}`;
         this.statusText.setText(text);
     }
@@ -228,18 +295,21 @@ class VikingChess extends Phaser.Scene {
                     return; // Game is over
                 }
 
-                // Switch turns
-                this.gameState = 'enemyTurn';
-                this.statusText.setText('Enemy Turn');
+                // Switch turns - now go to passiveEnemyTurn instead of directly to enemyTurn
+                this.gameState = 'passiveEnemyTurn';
+                this.statusText.setText('Passive Enemy Turn');
+                this.updateStatusText();
 
-                // Enemy's turn with a slight delay
-                this.time.delayedCall(800, this.enemyTurn, [], this);
+                // Process passive enemy turn effects
+                this.processPassiveEnemyTurn();
             }
         });
 
         // Start the timeline
         timeline.play();
     }
+
+    // Rest of the methods remain largely unchanged
 
     setHoveredPiece(piece) {
         this.hoveredPiece = piece;
@@ -271,6 +341,7 @@ class VikingChess extends Phaser.Scene {
         }
     }
 
+    // enemyTurn should only be called during enemyTurn state
     enemyTurn() {
         if (this.gameState !== 'enemyTurn') return;
 
@@ -305,9 +376,13 @@ class VikingChess extends Phaser.Scene {
             // Execute the move
             this.executeEnemyMove(selectedMove.piece, selectedMove.row, selectedMove.col);
         } else {
-            // No moves available, switch back to player
-            this.gameState = 'playerTurn';
-            this.statusText.setText('Player Turn');
+            // No moves available, switch back to passive player turn
+            this.gameState = 'passivePlayerTurn';
+            this.statusText.setText('Passive Player Turn');
+            this.updateStatusText();
+
+            // Process passive player turn
+            this.processPassivePlayerTurn();
         }
     }
 
@@ -397,15 +472,20 @@ class VikingChess extends Phaser.Scene {
                     return; // Game is over
                 }
 
-                // Switch turns back to player
-                this.gameState = 'playerTurn';
-                this.statusText.setText('Player Turn');
+                // Switch turns back to passive player turn
+                this.gameState = 'passivePlayerTurn';
+                this.statusText.setText('Passive Player Turn');
+                this.updateStatusText();
+
+                // Process passive player turn
+                this.processPassivePlayerTurn();
             }
         });
 
         // Start the timeline
         timeline.play();
     }
+
 
     evaluateMove(piece, row, col) {
         let score = 0;
