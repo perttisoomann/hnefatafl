@@ -23,6 +23,8 @@ class VikingChess extends Phaser.Scene {
         this.load.image('king_piece_level2', 'assets/king_piece_level2.png');
         this.load.image('king_piece_level3', 'assets/king_piece_level3.png');
         this.load.image('gold', 'assets/gold.png');
+        this.load.image('player_win_graphic', 'assets/player_win.png');
+        this.load.image('enemy_win_graphic', 'assets/enemy_win.png');
     }
 
     create() {
@@ -1053,13 +1055,37 @@ class VikingChess extends Phaser.Scene {
         this.gameState = 'gameOver';
         this.statusText.setText(message);
 
-        // Add a restart button
+        // Add the appropriate victory/defeat graphic
+        if (message.includes("Player Wins")) {
+            this.winGraphic = this.add.image(
+                this.cameras.main.width / 2,
+                this.cameras.main.height / 2 - 50,
+                'player_win_graphic'
+            ).setOrigin(0.5).setDepth(100);
+        } else {
+            this.winGraphic = this.add.image(
+                this.cameras.main.width / 2,
+                this.cameras.main.height / 2 - 50,
+                'enemy_win_graphic'
+            ).setOrigin(0.5).setDepth(100);
+        }
+
+        // Add animation to the graphic
+        this.tweens.add({
+            targets: this.winGraphic,
+            scale: { from: 0.5, to: 1 },
+            alpha: { from: 0, to: 1 },
+            duration: 800,
+            ease: 'Bounce.Out'
+        });
+
+        // Add restart button below the graphic
         this.restartButton = this.add.text(
             this.cameras.main.width / 2,
             this.cameras.main.height - 50,
             'Restart Game',
             { fontSize: '24px', fill: '#fff', backgroundColor: '#333', padding: { x: 10, y: 5 } }
-        ).setOrigin(0.5).setInteractive();
+        ).setOrigin(0.5).setInteractive().setDepth(100);
 
         this.restartButton.on('pointerdown', () => {
             this.cleanup(); // Clean up all game objects
@@ -1110,6 +1136,10 @@ class VikingChess extends Phaser.Scene {
 
         if(this.infoPanel){
             this.infoPanel.destroy();
+        }
+
+        if (this.winGraphic) {
+            this.winGraphic.destroy();
         }
     }
 }
