@@ -93,7 +93,7 @@ class VikingChess extends Phaser.Scene {
 
         // Check all enemy pieces
         for (const enemyPiece of this.enemyPieces) {
-            if (!enemyPiece.sprite || !enemyPiece.sprite.active) continue;
+            if (!enemyPiece.sprite || !enemyPiece.sprite.active || enemyPiece.hasMoved) continue;
 
             const row = enemyPiece.row;
             const col = enemyPiece.col;
@@ -152,6 +152,8 @@ class VikingChess extends Phaser.Scene {
             }
         }
 
+        this.resetMovementFlags();
+
         // Use a delayed call to transition to player turn after passive effects
         // Add a longer delay if captures were found to allow animations to complete
         const delayTime = capturesFound ? 1000 : 500;
@@ -181,7 +183,7 @@ class VikingChess extends Phaser.Scene {
 
         // Check each player piece
         for (const playerPiece of allPlayerPieces) {
-            if (!playerPiece.sprite || !playerPiece.sprite.active) continue;
+            if (!playerPiece.sprite || !playerPiece.sprite.active || playerPiece.hasMoved) continue;
 
             const row = playerPiece.row;
             const col = playerPiece.col;
@@ -238,6 +240,8 @@ class VikingChess extends Phaser.Scene {
             }
         }
 
+        this.resetMovementFlags();
+
         // Use a delayed call to transition to enemy turn after passive effects
         // Add a longer delay if captures were found to allow animations to complete
         const delayTime = capturesFound ? 1000 : 500;
@@ -251,6 +255,11 @@ class VikingChess extends Phaser.Scene {
             // Start enemy turn with a slight delay
             this.time.delayedCall(800, this.enemyTurn, [], this);
         }, [], this);
+    }
+
+    resetMovementFlags() {
+        this.playerPieces.forEach(piece => piece.hasMoved = false);
+        this.enemyPieces.forEach(piece => piece.hasMoved = false);
     }
 
     // Show the info panel with piece details - Unchanged
@@ -303,6 +312,8 @@ class VikingChess extends Phaser.Scene {
 
     movePiece(piece, newRow, newCol) {
         if (!this.selectedPiece) return;
+
+        piece.hasMoved = true;
 
         // Update the board data
         this.board.tiles[piece.row][piece.col].piece = null;
@@ -618,6 +629,8 @@ class VikingChess extends Phaser.Scene {
     }
 
     executeEnemyMove(piece, newRow, newCol) {
+        piece.hasMoved = true;
+
         // Update the board data
         this.board.tiles[piece.row][piece.col].piece = null;
         this.board.tiles[newRow][newCol].piece = piece;
