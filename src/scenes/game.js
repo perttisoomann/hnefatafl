@@ -1055,13 +1055,24 @@ class VikingChess extends Phaser.Scene {
         this.gameState = 'gameOver';
         this.statusText.setText(message);
 
-        // Add the appropriate victory/defeat graphic
         if (message.includes("Player Wins")) {
             this.winGraphic = this.add.image(
                 this.cameras.main.width / 2,
                 this.cameras.main.height / 2 - 50,
                 'player_win_graphic'
             ).setOrigin(0.5).setDepth(100);
+
+            // Add continue button for player wins
+            this.continueButton = this.add.text(
+                this.cameras.main.width / 2 - 100,
+                this.cameras.main.height - 50,
+                'Continue Campaign',
+                { fontSize: '24px', fill: '#fff', backgroundColor: '#008800', padding: { x: 10, y: 5 } }
+            ).setOrigin(0.5).setInteractive().setDepth(100);
+
+            this.continueButton.on('pointerdown', () => {
+                this.resetGameWithCurrentPlayerPieces();
+            });
         } else {
             this.winGraphic = this.add.image(
                 this.cameras.main.width / 2,
@@ -1070,7 +1081,7 @@ class VikingChess extends Phaser.Scene {
             ).setOrigin(0.5).setDepth(100);
         }
 
-        // Add animation to the graphic
+        // Animation for the graphic
         this.tweens.add({
             targets: this.winGraphic,
             scale: { from: 0.5, to: 1 },
@@ -1079,18 +1090,80 @@ class VikingChess extends Phaser.Scene {
             ease: 'Bounce.Out'
         });
 
-        // Add restart button below the graphic
+        // Always add restart button for both win/loss
         this.restartButton = this.add.text(
-            this.cameras.main.width / 2,
+            this.cameras.main.width / 2 + (message.includes("Player Wins") ? 100 : 0),
             this.cameras.main.height - 50,
-            'Restart Game',
+            'New Game',
             { fontSize: '24px', fill: '#fff', backgroundColor: '#333', padding: { x: 10, y: 5 } }
         ).setOrigin(0.5).setInteractive().setDepth(100);
 
         this.restartButton.on('pointerdown', () => {
-            this.cleanup(); // Clean up all game objects
+            this.cleanup();
             this.scene.restart();
         });
+    }
+
+    resetGameWithCurrentPlayerPieces() {
+        // Clean up everything except player pieces
+        if (this.restartButton) this.restartButton.destroy();
+        if (this.enemyPieces) {
+            this.enemyPieces.forEach(piece => piece.cleanup());
+        }
+        if (this.winGraphic) this.winGraphic.destroy();
+        if (this.goldGroup) this.goldGroup.destroy(true, true);
+        this.tweens.killAll();
+
+        // Reset game state
+        this.gameState = 'playerTurn';
+        this.selectedPiece = null;
+        this.goldGroup = this.add.group();
+
+        // Update status text
+        this.statusText.setText('Player Turn');
+
+        // Reset board (but don't destroy it)
+        this.board.resetBoard();
+
+        // Move remaining player pieces to the center
+        const centerPositions = [
+            [2, 3], [3, 2], [4, 3], [3, 4], // Cardinal directions
+            [2, 2], [2, 4], [4, 2], [4, 4]  // Diagonals
+        ];
+
+        this.playerPieces.forEach((piece, index) => {
+            if (index < centerPositions.length) {
+                const [newRow, newCol] = centerPositions[index];
+                piece.row = newRow;
+                piece.col = newCol;
+                const { x, y } = this.board.getTilePosition(newRow, newCol);
+                piece.sprite.setPosition(x, y);
+                this.board.tiles[newRow][newCol].piece = piece;
+            }
+        });
+
+        // Recreate king in center if it was captured
+        if (!this.kingPiece.sprite || !this.kingPiece.sprite.active) {
+            this.kingPiece = new KingPiece(this, this.board, 3, 3);
+        } else {
+            this.kingPiece.row = 3;
+            this.kingPiece.col = 3;
+            const { x, y } = this.board.getTilePosition(3, 3);
+            this.kingPiece.sprite.setPosition(x, y);
+            this.board.tiles[3][3].piece = this.kingPiece;
+        }
+
+        // Recreate enemy pieces in original positions
+        this.enemyPieces = [];
+        const enemyPositions = [
+            [0, 2], [0, 3], [0, 4], [3, 0], [3, 6], [6, 2], [6, 3], [6, 4]
+        ];
+        enemyPositions.forEach(([row, col]) => {
+            this.enemyPieces.push(new EnemyPiece(this, this.board, row, col));
+        });
+
+        // Process the passive player turn to start the new game
+        this.processPassivePlayerTurn();
     }
 
     // Add cleanup method to properly destroy all game objects
@@ -1140,6 +1213,10 @@ class VikingChess extends Phaser.Scene {
 
         if (this.winGraphic) {
             this.winGraphic.destroy();
+        }
+
+        if (this.continueButton) {
+            this.continueButton.destroy();
         }
     }
 }

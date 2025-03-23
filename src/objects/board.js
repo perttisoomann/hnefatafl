@@ -25,6 +25,16 @@ class GameBoard {
         }
     }
 
+    resetBoard() {
+        // Clear piece references from tiles without destroying tiles
+        for (let row = 0; row < this.rows; row++) {
+            for (let col = 0; col < this.cols; col++) {
+                this.tiles[row][col].piece = null;
+            }
+        }
+        this.clearHighlights();
+    }
+
     getTilePosition(row, col) {
         return {
             x: this.offsetX + col * this.tileSize + this.tileSize / 2,
