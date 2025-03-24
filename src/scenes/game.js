@@ -585,6 +585,12 @@ class VikingChess extends Phaser.Scene {
     enemyTurn() {
         if (this.gameState !== 'enemyTurn') return;
 
+        this.attackOpportunityMap = this.computeAttackOpportunityMap();
+        this.attackSetupMap = this.computeAttackSetupMap();
+
+        console.log(this.attackOpportunityMap);
+        console.log(this.attackSetupMap);
+
         // Find all possible moves for all enemy pieces
         let allMoves = [];
 
@@ -626,6 +632,63 @@ class VikingChess extends Phaser.Scene {
             // Process passive player turn
             this.processPassivePlayerTurn();
         }
+    }
+
+    computeAttackOpportunityMap() {
+        let map = Array.from({ length: this.board.rows }, () => Array(this.board.cols).fill(0));
+        const directions = [[0, 1], [0, -1], [1, 0], [-1, 0]];
+
+        for (let row = 0; row < this.board.rows; row++) {
+            for (let col = 0; col < this.board.cols; col++) {
+                if (this.board.tiles[row][col].piece) continue; // Only process empty tiles
+
+                for (const [dx, dy] of directions) {
+                    let playerRow = row + dx;
+                    let playerCol = col + dy;
+                    let enemyRow = row + 2 * dx;
+                    let enemyCol = col + 2 * dy;
+
+                    if (this.isValidTile(playerRow, playerCol) && this.isValidTile(enemyRow, enemyCol)) {
+                        let playerPiece = this.board.tiles[playerRow][playerCol].piece;
+                        let enemyPiece = this.board.tiles[enemyRow][enemyCol].piece;
+
+                        if ((playerPiece instanceof PlayerPiece || playerPiece instanceof KingPiece) &&
+                            (enemyPiece instanceof EnemyPiece)) {
+                            map[row][col] += playerPiece instanceof KingPiece ? 5 : 1;
+                        }
+                    }
+                }
+            }
+        }
+        return map;
+    }
+
+    computeAttackSetupMap() {
+        let map = Array.from({ length: this.board.rows }, () => Array(this.board.cols).fill(0));
+        const directions = [[0, 1], [0, -1], [1, 0], [-1, 0]];
+
+        for (let row = 0; row < this.board.rows; row++) {
+            for (let col = 0; col < this.board.cols; col++) {
+                if (this.board.tiles[row][col].piece) continue; // Only process empty tiles
+
+                for (const [dx, dy] of directions) {
+                    let playerRow = row + dx;
+                    let playerCol = col + dy;
+                    let emptyRow = row + 2 * dx;
+                    let emptyCol = col + 2 * dy;
+
+                    if (this.isValidTile(playerRow, playerCol) && this.isValidTile(emptyRow, emptyCol)) {
+                        let playerPiece = this.board.tiles[playerRow][playerCol].piece;
+                        let emptyTile = !this.board.tiles[emptyRow][emptyCol].piece;
+
+                        if ((playerPiece instanceof PlayerPiece || playerPiece instanceof KingPiece) && emptyTile) {
+                            map[row][col] += playerPiece instanceof KingPiece ? 5 : 1;
+                        }
+                    }
+                }
+            }
+        }
+        return map;
     }
 
     executeEnemyMove(piece, newRow, newCol) {
@@ -733,42 +796,30 @@ class VikingChess extends Phaser.Scene {
     evaluateMove(piece, row, col) {
         let score = 0;
 
-        // Check if the move leads to an attack setup
-        if (this.canSetupAttack(piece, row, col)) {
-            score += 80 * piece.attackMultiplier;
-        }
+        // Use precomputed escape danger map
+        score += this.attackSetupMap[row][col] * 70 * piece.attackMultiplier;
 
+        // Use precomputed attack opportunity map
+        score += this.attackOpportunityMap[row][col] * 100 * piece.attackMultiplier;
+
+        /*
         // Check if the move escapes an imminent attack
         if (this.avoidsAttack(piece, row, col)) {
             score += 80 * piece.survivalMultiplier;
         }
+         */
 
-        // Prioritize captures
-        if (this.canCaptureAfterMove(piece, row, col)) {
-            score += 100 * piece.attackMultiplier;
-        }
 
+        /*
         // Distance to king (aggression factor)
         const distanceToKing = Math.abs(row - this.kingPiece.row) + Math.abs(col - this.kingPiece.col);
         score += (20 - distanceToKing) * 5 * piece.attackMultiplier;
+         */
 
         // Randomness to avoid predictable behavior
-        score += Math.random() * 10;
+        score += Math.random() * 5;
 
         return score;
-    }
-
-    canSetupAttack(piece, row, col) {
-        const directions = [[0, 1], [0, -1], [1, 0], [-1, 0]];
-        for (const [dx, dy] of directions) {
-            const nextRow = row + dx;
-            const nextCol = col + dy;
-            if (this.isValidTile(nextRow, nextCol)) {
-                const nextPiece = this.board.tiles[nextRow][nextCol].piece;
-                if (!nextPiece) return true;
-            }
-        }
-        return false;
     }
 
     avoidsAttack(piece, row, col) {
@@ -790,75 +841,6 @@ class VikingChess extends Phaser.Scene {
 
     isValidTile(row, col) {
         return row >= 0 && row < this.board.rows && col >= 0 && col < this.board.cols;
-    }
-
-    canCaptureAfterMove(piece, newRow, newCol) {
-        let captureCount = 0;
-
-        // Temporarily move the piece
-        const originalRow = piece.row;
-        const originalCol = piece.col;
-        const originalTilePiece = this.board.tiles[originalRow][originalCol].piece;
-        const targetTilePiece = this.board.tiles[newRow][newCol].piece;
-
-        // Update board data temporarily
-        this.board.tiles[originalRow][originalCol].piece = null;
-        this.board.tiles[newRow][newCol].piece = piece;
-        piece.row = newRow;
-        piece.col = newCol;
-
-        // Check for potential captures
-        // Check right
-        if (newCol < this.board.cols - 2) {
-            const rightPiece = this.board.tiles[newRow][newCol + 1].piece;
-            if (rightPiece instanceof PlayerPiece || rightPiece instanceof KingPiece) {
-                const sandwichPiece = this.board.tiles[newRow][newCol + 2].piece;
-                if (sandwichPiece instanceof EnemyPiece) {
-                    captureCount++;
-                }
-            }
-        }
-
-        // Check left
-        if (newCol >= 2) {
-            const leftPiece = this.board.tiles[newRow][newCol - 1].piece;
-            if (leftPiece instanceof PlayerPiece || leftPiece instanceof KingPiece) {
-                const sandwichPiece = this.board.tiles[newRow][newCol - 2].piece;
-                if (sandwichPiece instanceof EnemyPiece) {
-                    captureCount++;
-                }
-            }
-        }
-
-        // Check down
-        if (newRow < this.board.rows - 2) {
-            const downPiece = this.board.tiles[newRow + 1][newCol].piece;
-            if (downPiece instanceof PlayerPiece || downPiece instanceof KingPiece) {
-                const sandwichPiece = this.board.tiles[newRow + 2][newCol].piece;
-                if (sandwichPiece instanceof EnemyPiece) {
-                    captureCount++;
-                }
-            }
-        }
-
-        // Check up
-        if (newRow >= 2) {
-            const upPiece = this.board.tiles[newRow - 1][newCol].piece;
-            if (upPiece instanceof PlayerPiece || upPiece instanceof KingPiece) {
-                const sandwichPiece = this.board.tiles[newRow - 2][newCol].piece;
-                if (sandwichPiece instanceof EnemyPiece) {
-                    captureCount++;
-                }
-            }
-        }
-
-        // Restore the original board state
-        piece.row = originalRow;
-        piece.col = originalCol;
-        this.board.tiles[originalRow][originalCol].piece = originalTilePiece;
-        this.board.tiles[newRow][newCol].piece = targetTilePiece;
-
-        return captureCount;
     }
 
     checkCaptures(piece) {
