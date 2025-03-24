@@ -1084,6 +1084,7 @@ class VikingChess extends Phaser.Scene {
             ).setOrigin(0.5).setInteractive().setDepth(100);
 
             this.continueButton.on('pointerdown', () => {
+                this.continueButton.destroy();
                 this.resetGameWithCurrentPlayerPieces();
             });
         } else {
