@@ -44,6 +44,7 @@ class VikingChess extends Phaser.Scene {
             [2, 3], [3, 2], [4, 3], [3, 4], // Cardinal directions
             [2, 2], [2, 4], [4, 2], [4, 4]  // Diagonals
         ];
+
         playerPositions.forEach(([row, col]) => {
             this.playerPieces.push(new PlayerPiece(this, this.board, row, col));
         });
@@ -176,10 +177,7 @@ class VikingChess extends Phaser.Scene {
         let capturesFound = false;
 
         // Check all player pieces (including king)
-        const allPlayerPieces = [...this.playerPieces];
-        if (this.kingPiece && this.kingPiece.sprite && this.kingPiece.sprite.active) {
-            allPlayerPieces.push(this.kingPiece);
-        }
+        const allPlayerPieces = [...this.playerPieces, this.kingPiece];
 
         // Check each player piece
         for (const playerPiece of allPlayerPieces) {
@@ -846,7 +844,10 @@ class VikingChess extends Phaser.Scene {
                 // Skip if no piece or piece is same type
                 if (!adjacentPiece) continue;
                 if ((isPlayerPiece && (adjacentPiece instanceof PlayerPiece || adjacentPiece instanceof KingPiece)) ||
-                    (!isPlayerPiece && adjacentPiece instanceof EnemyPiece)) continue;
+                    (!isPlayerPiece && adjacentPiece instanceof EnemyPiece)) {
+                    if (adjacentPiece instanceof KingPiece) continue; // Allow king to be captured normally
+                    continue;
+                }
 
                 // Check for sandwiching piece
                 const sandwichRow = checkRow + dx;
@@ -860,9 +861,6 @@ class VikingChess extends Phaser.Scene {
                     // If the sandwiching piece is of the same type as the current piece
                     if ((isPlayerPiece && (sandwichPiece instanceof PlayerPiece || sandwichPiece instanceof KingPiece)) ||
                         (!isPlayerPiece && sandwichPiece instanceof EnemyPiece)) {
-
-                        // Don't capture the king with this method
-                        if (adjacentPiece instanceof KingPiece) continue;
 
                         // Store the pieces involved in this capture for XP calculation
                         if (isPlayerPiece && adjacentPiece instanceof EnemyPiece) {
@@ -1015,43 +1013,31 @@ class VikingChess extends Phaser.Scene {
     }
 
     checkWinConditions() {
-        // Check if the king reached an edge (player wins)
-        if (this.kingPiece.row === 0 || this.kingPiece.row === this.board.rows - 1 ||
-            this.kingPiece.col === 0 || this.kingPiece.col === this.board.cols - 1) {
-            this.endGame("Player Wins! King escaped!");
-            return true;
-        }
-
-        // Check if king is surrounded on all four sides (enemy wins)
+        // Check if the King has reached a corner (player wins)
         const kingRow = this.kingPiece.row;
         const kingCol = this.kingPiece.col;
-        let surroundedCount = 0;
+        const boardSize = this.board.rows - 1; // Assuming square board
 
-        // Check all four directions
-        const directions = [[0, 1], [0, -1], [1, 0], [-1, 0]];
-        for (const [dx, dy] of directions) {
-            const checkRow = kingRow + dx;
-            const checkCol = kingCol + dy;
+        const isCorner =
+            (kingRow === 0 && kingCol === 0) ||  // Top-left corner
+            (kingRow === 0 && kingCol === boardSize) ||  // Top-right corner
+            (kingRow === boardSize && kingCol === 0) ||  // Bottom-left corner
+            (kingRow === boardSize && kingCol === boardSize);  // Bottom-right corner
 
-            if (checkRow < 0 || checkRow >= this.board.rows ||
-                checkCol < 0 || checkCol >= this.board.cols) {
-                continue; // Out of bounds counts as not surrounded
-            }
-
-            const adjacentPiece = this.board.tiles[checkRow][checkCol].piece;
-            if (adjacentPiece instanceof EnemyPiece) {
-                surroundedCount++;
-            }
-        }
-
-        if (surroundedCount === 4) {
-            this.endGame("Enemy Wins! King is captured!");
+        if (isCorner) {
+            this.endGame("Player Wins! King escaped!");
             return true;
         }
 
         // Check if player has no pieces left
         if (this.playerPieces.length === 0) {
             this.endGame("Enemy Wins! All defenders are captured!");
+            return true;
+        }
+
+        // Check if the King has been captured
+        if (!this.kingPiece.sprite || !this.kingPiece.sprite.active) {
+            this.endGame("Enemy Wins! King is captured!");
             return true;
         }
 
