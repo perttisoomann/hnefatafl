@@ -9,6 +9,9 @@ class Piece {
         this.health = 1;
         this.attack = 1;
         this.hasMoved = false;
+        this.attackMultiplier = 1;
+        this.survivalMultiplier = 1;
+
         this.sprite.setInteractive();
         this.sprite.on('pointerdown', () => scene.selectPiece(this));
 

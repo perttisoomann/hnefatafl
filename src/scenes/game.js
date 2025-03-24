@@ -605,6 +605,8 @@ class VikingChess extends Phaser.Scene {
             });
         });
 
+        console.log(allMoves);
+
         // Sort moves by score (highest first)
         allMoves.sort((a, b) => b.score - a.score);
 
@@ -728,26 +730,66 @@ class VikingChess extends Phaser.Scene {
         timeline.play();
     }
 
-
     evaluateMove(piece, row, col) {
         let score = 0;
 
-        // Prioritize moves that can capture player pieces
-        const captureScore = this.canCaptureAfterMove(piece, row, col);
-        score += captureScore * 100;
+        // Check if the move leads to an attack setup
+        if (this.canSetupAttack(piece, row, col)) {
+            score += 80 * piece.attackMultiplier;
+        }
 
-        // Prioritize moves toward the king
+        // Check if the move escapes an imminent attack
+        if (this.avoidsAttack(piece, row, col)) {
+            score += 80 * piece.survivalMultiplier;
+        }
+
+        // Prioritize captures
+        if (this.canCaptureAfterMove(piece, row, col)) {
+            score += 100 * piece.attackMultiplier;
+        }
+
+        // Distance to king (aggression factor)
         const distanceToKing = Math.abs(row - this.kingPiece.row) + Math.abs(col - this.kingPiece.col);
-        score += (20 - distanceToKing) * 5;
+        score += (20 - distanceToKing) * 5 * piece.attackMultiplier;
 
-        // Add some strategic positioning (center control, etc.)
-        const centerDistance = Math.abs(row - 5) + Math.abs(col - 5);
-        score += (10 - centerDistance) * 2;
-
-        // Add some randomness to avoid predictability
+        // Randomness to avoid predictable behavior
         score += Math.random() * 10;
 
         return score;
+    }
+
+    canSetupAttack(piece, row, col) {
+        const directions = [[0, 1], [0, -1], [1, 0], [-1, 0]];
+        for (const [dx, dy] of directions) {
+            const nextRow = row + dx;
+            const nextCol = col + dy;
+            if (this.isValidTile(nextRow, nextCol)) {
+                const nextPiece = this.board.tiles[nextRow][nextCol].piece;
+                if (!nextPiece) return true;
+            }
+        }
+        return false;
+    }
+
+    avoidsAttack(piece, row, col) {
+        return this.isTileSafe(row, col) ? 1 : 0;
+    }
+
+    isTileSafe(row, col) {
+        const directions = [[0, 1], [0, -1], [1, 0], [-1, 0]];
+        for (const [dx, dy] of directions) {
+            const adjRow = row + dx;
+            const adjCol = col + dy;
+            if (this.isValidTile(adjRow, adjCol)) {
+                const adjPiece = this.board.tiles[adjRow][adjCol].piece;
+                if (adjPiece instanceof PlayerPiece) return false;
+            }
+        }
+        return true;
+    }
+
+    isValidTile(row, col) {
+        return row >= 0 && row < this.board.rows && col >= 0 && col < this.board.cols;
     }
 
     canCaptureAfterMove(piece, newRow, newCol) {
