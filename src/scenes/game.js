@@ -1013,9 +1013,18 @@ class VikingChess extends Phaser.Scene {
     }
 
     checkWinConditions() {
-        // Check if the king reached an edge (player wins)
-        if (this.kingPiece.row === 0 || this.kingPiece.row === this.board.rows - 1 ||
-            this.kingPiece.col === 0 || this.kingPiece.col === this.board.cols - 1) {
+        // Check if the King has reached a corner (player wins)
+        const kingRow = this.kingPiece.row;
+        const kingCol = this.kingPiece.col;
+        const boardSize = this.board.rows - 1; // Assuming square board
+
+        const isCorner =
+            (kingRow === 0 && kingCol === 0) ||  // Top-left corner
+            (kingRow === 0 && kingCol === boardSize) ||  // Top-right corner
+            (kingRow === boardSize && kingCol === 0) ||  // Bottom-left corner
+            (kingRow === boardSize && kingCol === boardSize);  // Bottom-right corner
+
+        if (isCorner) {
             this.endGame("Player Wins! King escaped!");
             return true;
         }
