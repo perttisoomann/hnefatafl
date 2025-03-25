@@ -618,11 +618,8 @@ class VikingChess extends Phaser.Scene {
     enemyTurn() {
         if (this.gameState !== 'enemyTurn') return;
 
-        this.attackOpportunityMap = this.computeAttackOpportunityMap();
-        this.attackSetupMap = this.computeAttackSetupMap();
-
-        console.log(this.attackOpportunityMap);
-        console.log(this.attackSetupMap);
+        this.attackOpportunityMap = this.applyForesight(this.computeAttackOpportunityMap(), 2);
+        this.attackSetupMap = this.applyForesight(this.computeAttackSetupMap(), 2);
 
         // Find all possible moves for all enemy pieces
         let allMoves = [];
@@ -646,8 +643,6 @@ class VikingChess extends Phaser.Scene {
 
         // Sort moves by score (highest first)
         allMoves.sort((a, b) => b.score - a.score);
-
-        console.log(allMoves);
 
         if (allMoves.length > 0) {
             // Get the best move (or one of the top moves with some randomness)
@@ -720,6 +715,53 @@ class VikingChess extends Phaser.Scene {
                 }
             }
         }
+        return map;
+    }
+
+    applyForesight(originalMap, iterations = 1) {
+        const strength = 0.5;
+        let map = Array.from({ length: this.board.rows }, () => Array(this.board.cols).fill(0));
+        const directions = [[0, 1], [0, -1], [1, 0], [-1, 0]];
+
+        // TODO: calculate new values
+        for (let row = 0; row < this.board.rows; row++) {
+            for (let col = 0; col < this.board.cols; col++) {
+                if (originalMap[row][col] !== 0) {
+                    for (const [dx, dy] of directions) {
+                        let checkRow = row;
+                        let checkCol = col;
+                        for (let i = 1; i < this.board.cols; i++) {
+                            checkRow += dy;
+                            checkCol += dx;
+
+                            // reached the end of the board
+                            if (
+                                checkRow < 0 || checkRow >= this.board.rows
+                                || checkCol < 0 || checkCol >= this.board.cols
+                            ) {
+                                break;
+                            }
+
+                            // reached a tile with piece on it
+                            if (this.board.tiles[checkRow][checkCol].piece) {
+                                break;
+                            }
+
+                            map[checkRow][checkCol] += originalMap[row][col] * strength;
+                        }
+                    }
+                }
+            }
+        }
+
+        // TODO: pass to iterative loop
+
+        for (let row = 0; row < this.board.rows; row++) {
+            for (let col = 0; col < this.board.cols; col++) {
+                map[row][col] += originalMap[row][col];
+            }
+        }
+
         return map;
     }
 
