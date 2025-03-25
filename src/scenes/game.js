@@ -19,6 +19,8 @@ class VikingChess extends Phaser.Scene {
         this.load.image('pawn_piece_level2', 'assets/pawn_piece_level2.png');
         this.load.image('pawn_piece_level3', 'assets/pawn_piece_level3.png');
         this.load.image('enemy_piece', 'assets/enemy_piece.png');
+        this.load.image('enemy_piece_level2', 'assets/enemy_piece_level2.png');
+        this.load.image('enemy_piece_level3', 'assets/enemy_piece_level3.png');
         this.load.image('king_piece', 'assets/king_piece.png');
         this.load.image('king_piece_level2', 'assets/king_piece_level2.png');
         this.load.image('king_piece_level3', 'assets/king_piece_level3.png');
@@ -62,17 +64,11 @@ class VikingChess extends Phaser.Scene {
         });
 
         this.enemyPieces = [];
-        const enemyPositions = [
+        let enemyPositions = [
             // Top
             [0, centerCol - 1],
             [0, centerCol],
             [0, centerCol + 1],
-
-            // Left
-            [centerRow, 0],
-
-            // Right
-            [centerRow, this.board.cols - 1],
 
             // Bottom
             [this.board.rows - 1, centerCol - 1],
@@ -81,6 +77,17 @@ class VikingChess extends Phaser.Scene {
         ];
         enemyPositions.forEach(([row, col]) => {
             this.enemyPieces.push(new EnemyPiece(this, this.board, row, col));
+        });
+
+        enemyPositions = [
+            // Left
+            [centerRow, 0],
+
+            // Right
+            [centerRow, this.board.cols - 1],
+        ];
+        enemyPositions.forEach(([row, col]) => {
+            this.enemyPieces.push(new EnemyPiece(this, this.board, row, col, 2));
         });
 
         // Add status text
@@ -1217,26 +1224,30 @@ class VikingChess extends Phaser.Scene {
 
         // Recreate enemy pieces in original positions
         this.enemyPieces = [];
-        const enemyPositions = [
+        let enemyPositions = [
             // Top
             [0, centerCol - 1],
             [0, centerCol],
             [0, centerCol + 1],
 
+            // Bottom
+            [this.board.rows - 1, centerCol - 1],
+            [this.board.rows - 1, centerCol],
+            [this.board.rows - 1, centerCol + 1],
+        ];
+        enemyPositions.forEach(([row, col]) => {
+            this.enemyPieces.push(new EnemyPiece(this, this.board, row, col));
+        });
+
+        enemyPositions = [
             // Left
             [centerRow, 0],
 
             // Right
             [centerRow, this.board.cols - 1],
-
-            // Bottom
-            [this.board.rows - 1, centerCol - 1],
-            [this.board.rows - 1, centerCol],
-            [this.board.rows - 1, centerCol + 1],
-            [this.board.rows - 1, centerCol + 1],
         ];
         enemyPositions.forEach(([row, col]) => {
-            this.enemyPieces.push(new EnemyPiece(this, this.board, row, col));
+            this.enemyPieces.push(new EnemyPiece(this, this.board, row, col, 2));
         });
 
         // Process the passive player turn to start the new game
