@@ -90,7 +90,7 @@ class VikingChess extends Phaser.Scene {
             [centerRow, this.board.cols - 1],
         ];
         enemyPositions.forEach(([row, col]) => {
-            this.enemyPieces.push(new EnemyPiece(this, this.board, row, col, 2));
+            this.enemyPieces.push(new EnemyPiece(this, this.board, row, col, 1));
         });
 
         // Add status text
@@ -1249,6 +1249,7 @@ class VikingChess extends Phaser.Scene {
                 const [newRow, newCol] = centerPositions[index];
                 piece.row = newRow;
                 piece.col = newCol;
+                piece.heal(1);
                 const { x, y } = this.board.getTilePosition(newRow, newCol);
                 piece.sprite.setPosition(x, y);
                 this.board.tiles[newRow][newCol].piece = piece;
@@ -1263,6 +1264,7 @@ class VikingChess extends Phaser.Scene {
             this.kingPiece.col = centerCol;
             const { x, y } = this.board.getTilePosition(centerRow, centerCol);
             this.kingPiece.sprite.setPosition(x, y);
+            this.kingPiece.heal(1);
             this.board.tiles[centerRow][centerCol].piece = this.kingPiece;
         }
 
