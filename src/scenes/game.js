@@ -611,15 +611,14 @@ class VikingChess extends Phaser.Scene {
             });
         });
 
-        console.log(allMoves);
-
         // Sort moves by score (highest first)
         allMoves.sort((a, b) => b.score - a.score);
 
+        console.log(allMoves);
+
         if (allMoves.length > 0) {
             // Get the best move (or one of the top moves with some randomness)
-            const randomIndex = Math.floor(Math.random() * Math.min(3, allMoves.length));
-            const selectedMove = allMoves[randomIndex];
+            const selectedMove = allMoves[0];
 
             // Execute the move
             this.executeEnemyMove(selectedMove.piece, selectedMove.row, selectedMove.col);
@@ -797,10 +796,10 @@ class VikingChess extends Phaser.Scene {
         let score = 0;
 
         // Use precomputed escape danger map
-        score += this.attackSetupMap[row][col] * 70 * piece.attackMultiplier;
+        score += this.attackSetupMap[row][col] * 50 * piece.attackMultiplier;
 
         // Use precomputed attack opportunity map
-        score += this.attackOpportunityMap[row][col] * 100 * piece.attackMultiplier;
+        score += this.attackOpportunityMap[row][col] * 250 * piece.attackMultiplier;
 
         /*
         // Check if the move escapes an imminent attack
