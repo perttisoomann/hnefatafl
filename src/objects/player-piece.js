@@ -24,6 +24,8 @@ class PlayerPiece extends Piece {
                 this.sprite.clearTint();
             }
         });
+
+        this.updateHearts();
     }
 
     getLevelConfig() {
@@ -62,7 +64,9 @@ class PlayerPiece extends Piece {
     applyBonus(bonus) {
         // Apply level bonuses, extend in subclasses for specific bonuses
         if (bonus.health) {
-            this.health = (this.health || 1) + bonus.health;
+            this.maxHealth = (this.maxHealth || 1) + bonus.health;
+            this.createHearts();
+            this.heal(bonus.health);
         }
         if (bonus.attack) {
             this.attack = (this.attack || 1) + bonus.attack;

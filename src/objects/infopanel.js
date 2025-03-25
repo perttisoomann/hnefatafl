@@ -54,20 +54,20 @@ class InfoPanel {
             title = 'King ' + piece.name;
             details = `The king must escape to the edge\nof the board to win.\n\n` +
                 `Experience: ${piece.xp} XP\n` +
-                `Health: ${piece.health}\n` +
+                `Health: ${piece.health}/${piece.maxHealth}\n` +
                 `Attack: ${piece.attack}\n` +
                 `Movement: One space in any direction`;
         } else if (piece instanceof PlayerPiece) {
             title = 'Defender ' + piece.name;
             details = `Protect the king and capture\nenemy pieces.\n\n` +
                 `Experience: ${piece.xp} XP\n` +
-                `Health: ${piece.health}\n` +
+                `Health: ${piece.health}/${piece.maxHealth}\n` +
                 `Attack: ${piece.attack}\n` +
                 `Movement: Any number of spaces\nhorizontally or vertically`;
         } else if (piece instanceof EnemyPiece) {
             title = 'Attacker';
             details = `Capture the king by surrounding\nit on all four sides.\n\n` +
-                `Health: ${piece.health}\n` +
+                `Health: ${piece.health}/${piece.maxHealth}\n` +
                 `Attack: ${piece.attack}\n` +
                 `Movement: Any number of spaces\nhorizontally or vertically`;
         }

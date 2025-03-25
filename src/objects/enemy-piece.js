@@ -19,16 +19,20 @@ class EnemyPiece extends Piece {
                 break;
 
             case 2:
-                this.health = 2;
+                this.maxHealth = 2;
+                this.health = this.maxHealth;
                 this.survivalMultiplier = 0.25;
                 break;
 
             case 3:
-                this.health = 3;
+                this.maxHealth = 2;
+                this.health = this.maxHealth;
                 this.attack = 2;
                 this.survivalMultiplier = 0.5;
                 break;
         }
+
+        this.createHearts();
     }
 
     getValidMoves() {

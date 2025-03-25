@@ -27,6 +27,9 @@ class VikingChess extends Phaser.Scene {
         this.load.image('gold', 'assets/gold.png');
         this.load.image('player_win_graphic', 'assets/player_win.png');
         this.load.image('enemy_win_graphic', 'assets/enemy_win.png');
+
+        this.load.image('heart_red', 'assets/heart_full.png');
+        this.load.image('heart_grey', 'assets/heart_empty.png');
     }
 
     create() {
@@ -1066,7 +1069,7 @@ class VikingChess extends Phaser.Scene {
             });
         }
 
-        piece.health -= maxAttack;
+        piece.takeDamage(maxAttack);
 
         if (piece.health > 0) {
             return;
@@ -1089,7 +1092,7 @@ class VikingChess extends Phaser.Scene {
             duration: 300,
             onComplete: () => {
                 // Remove the sprite
-                piece.sprite.destroy();
+                piece.death();
 
                 // Remove from arrays
                 if (piece instanceof PlayerPiece) {
@@ -1293,6 +1296,12 @@ class VikingChess extends Phaser.Scene {
 
         // Process the passive player turn to start the new game
         this.processPassivePlayerTurn();
+    }
+
+    update() {
+        this.kingPiece.updateHeartsPosition();
+        this.playerPieces.forEach(piece => piece.updateHeartsPosition());
+        this.enemyPieces.forEach(piece => piece.updateHeartsPosition());
     }
 
     // Add cleanup method to properly destroy all game objects

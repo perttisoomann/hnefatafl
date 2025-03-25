@@ -4,7 +4,8 @@ class KingPiece extends PlayerPiece {
         this.xp = 0; // Initialize XP for king piece too
         this.xpText = null;
         this.name = generateVikingName();
-        this.health = 2;
+        this.maxHealth = 2;
+        this.health = this.maxHealth;
 
         this.sprite.on('pointerover', () => {
             if (scene.selectedPiece !== this) {
@@ -16,6 +17,8 @@ class KingPiece extends PlayerPiece {
                 this.sprite.clearTint();
             }
         });
+
+        this.createHearts();
     }
 
     getLevelConfig() {
