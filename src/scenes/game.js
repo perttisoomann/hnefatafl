@@ -19,6 +19,8 @@ class VikingChess extends Phaser.Scene {
         this.load.image('pawn_piece_level2', 'assets/pawn_piece_level2.png');
         this.load.image('pawn_piece_level3', 'assets/pawn_piece_level3.png');
         this.load.image('enemy_piece', 'assets/enemy_piece.png');
+        this.load.image('enemy_piece_level2', 'assets/enemy_piece_level2.png');
+        this.load.image('enemy_piece_level3', 'assets/enemy_piece_level3.png');
         this.load.image('king_piece', 'assets/king_piece.png');
         this.load.image('king_piece_level2', 'assets/king_piece_level2.png');
         this.load.image('king_piece_level3', 'assets/king_piece_level3.png');
@@ -37,12 +39,24 @@ class VikingChess extends Phaser.Scene {
 
         this.board = new GameBoard(this);
 
-        this.kingPiece = new KingPiece(this, this.board, 3, 3);
+        const centerCol = Math.floor(this.board.cols / 2);
+        const centerRow = Math.floor(this.board.rows / 2);
+
+        this.kingPiece = new KingPiece(this, this.board, centerRow, centerCol);
 
         this.playerPieces = [];
         const playerPositions = [
-            [2, 3], [3, 2], [4, 3], [3, 4], // Cardinal directions
-            [2, 2], [2, 4], [4, 2], [4, 4]  // Diagonals
+            // Cardinal directions
+            [centerRow - 1, centerCol],
+            [centerRow, centerCol - 1],
+            [centerRow, centerCol + 1],
+            [centerRow + 1, centerCol],
+
+            // Diagonals
+            [centerRow - 1, centerCol - 1],
+            [centerRow - 1, centerCol + 1],
+            [centerRow + 1, centerCol - 1],
+            [centerRow + 1, centerCol + 1],
         ];
 
         playerPositions.forEach(([row, col]) => {
@@ -50,11 +64,30 @@ class VikingChess extends Phaser.Scene {
         });
 
         this.enemyPieces = [];
-        const enemyPositions = [
-            [0, 2], [0, 3], [0, 4], [3, 0], [3, 6], [6, 2], [6, 3], [6, 4]
+        let enemyPositions = [
+            // Top
+            [0, centerCol - 1],
+            [0, centerCol],
+            [0, centerCol + 1],
+
+            // Bottom
+            [this.board.rows - 1, centerCol - 1],
+            [this.board.rows - 1, centerCol],
+            [this.board.rows - 1, centerCol + 1],
         ];
         enemyPositions.forEach(([row, col]) => {
             this.enemyPieces.push(new EnemyPiece(this, this.board, row, col));
+        });
+
+        enemyPositions = [
+            // Left
+            [centerRow, 0],
+
+            // Right
+            [centerRow, this.board.cols - 1],
+        ];
+        enemyPositions.forEach(([row, col]) => {
+            this.enemyPieces.push(new EnemyPiece(this, this.board, row, col, 2));
         });
 
         // Add status text
@@ -1148,10 +1181,22 @@ class VikingChess extends Phaser.Scene {
         // Reset board (but don't destroy it)
         this.board.resetBoard();
 
+        const centerCol = Math.floor(this.board.cols / 2);
+        const centerRow = Math.floor(this.board.rows / 2);
+
         // Move remaining player pieces to the center
         const centerPositions = [
-            [2, 3], [3, 2], [4, 3], [3, 4], // Cardinal directions
-            [2, 2], [2, 4], [4, 2], [4, 4]  // Diagonals
+            // Cardinal directions
+            [centerRow - 1, centerCol],
+            [centerRow, centerCol - 1],
+            [centerRow, centerCol + 1],
+            [centerRow + 1, centerCol],
+
+            // Diagonals
+            [centerRow - 1, centerCol - 1],
+            [centerRow - 1, centerCol + 1],
+            [centerRow + 1, centerCol - 1],
+            [centerRow + 1, centerCol + 1],
         ];
 
         this.playerPieces.forEach((piece, index) => {
@@ -1167,22 +1212,41 @@ class VikingChess extends Phaser.Scene {
 
         // Recreate king in center if it was captured
         if (!this.kingPiece.sprite || !this.kingPiece.sprite.active) {
-            this.kingPiece = new KingPiece(this, this.board, 3, 3);
+            this.kingPiece = new KingPiece(this, this.board, centerRow, centerCol);
         } else {
-            this.kingPiece.row = 3;
-            this.kingPiece.col = 3;
-            const { x, y } = this.board.getTilePosition(3, 3);
+            this.kingPiece.row = centerRow;
+            this.kingPiece.col = centerCol;
+            const { x, y } = this.board.getTilePosition(centerRow, centerCol);
             this.kingPiece.sprite.setPosition(x, y);
-            this.board.tiles[3][3].piece = this.kingPiece;
+            this.board.tiles[centerRow][centerCol].piece = this.kingPiece;
         }
 
         // Recreate enemy pieces in original positions
         this.enemyPieces = [];
-        const enemyPositions = [
-            [0, 2], [0, 3], [0, 4], [3, 0], [3, 6], [6, 2], [6, 3], [6, 4]
+        let enemyPositions = [
+            // Top
+            [0, centerCol - 1],
+            [0, centerCol],
+            [0, centerCol + 1],
+
+            // Bottom
+            [this.board.rows - 1, centerCol - 1],
+            [this.board.rows - 1, centerCol],
+            [this.board.rows - 1, centerCol + 1],
         ];
         enemyPositions.forEach(([row, col]) => {
             this.enemyPieces.push(new EnemyPiece(this, this.board, row, col));
+        });
+
+        enemyPositions = [
+            // Left
+            [centerRow, 0],
+
+            // Right
+            [centerRow, this.board.cols - 1],
+        ];
+        enemyPositions.forEach(([row, col]) => {
+            this.enemyPieces.push(new EnemyPiece(this, this.board, row, col, 2));
         });
 
         // Process the passive player turn to start the new game

@@ -1,5 +1,5 @@
 class GameBoard {
-    constructor(scene, rows = 7, cols = 7, tileSize = 86) {
+    constructor(scene, rows = 9, cols = 9, tileSize = 70) {
         this.scene = scene;
         this.rows = rows;
         this.cols = cols;
