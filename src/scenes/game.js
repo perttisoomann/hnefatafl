@@ -112,12 +112,27 @@ class VikingChess extends Phaser.Scene {
     createInfoPanel() {
         const panelWidth = 200;
         const panelHeight = 300;
-        const panelX = this.cameras.main.width - panelWidth - 20;
-        const panelY = this.cameras.main.height / 2 - panelHeight / 2;
 
-        this.infoPanel = new InfoPanel(this, panelX, panelY, panelWidth, panelHeight);
-        // Initially hide the panel (set alpha to 0)
+        // Right-side panel for hovered piece
+        const rightPanelX = this.cameras.main.width - panelWidth - 20;
+        const panelY = this.cameras.main.height / 2 - panelHeight / 2;
+        this.infoPanel = new InfoPanel(this, rightPanelX, panelY, panelWidth, panelHeight);
         this.hideInfoPanel();
+
+        // Left-side panel for selected piece
+        const leftPanelX = 20;
+        this.selectedInfoPanel = new InfoPanel(this, leftPanelX, panelY, panelWidth, panelHeight);
+        this.hideSelectedInfoPanel();
+    }
+
+    // Show selected piece info
+    showSelectedPieceInfo(piece) {
+        this.selectedInfoPanel.show(piece);
+    }
+
+    // Hide selected piece info
+    hideSelectedInfoPanel() {
+        this.selectedInfoPanel.hide();
     }
 
     processPassivePlayerTurn() {
@@ -316,6 +331,9 @@ class VikingChess extends Phaser.Scene {
         this.selectedPiece = piece;
         this.selectedPiece.sprite.setTint(0xffff00);
         this.board.highlightTiles(piece.getValidMoves(), piece);
+
+        this.showSelectedPieceInfo(piece);
+
         this.updateStatusText(); // Update status to show treasure
     }
 
