@@ -22,9 +22,11 @@ class Piece {
 
         board.tiles[row][col].piece = this;
 
-        // Create a hearts array instead of a group
         this.hearts = [];
         this.createHearts();
+
+        this.attackIcons = [];
+        this.createAttackIcons();
     }
 
     getValidMoves() {
@@ -63,6 +65,18 @@ class Piece {
         this.updateHeartsPosition();
     }
 
+    createAttackIcons() {
+        this.attackIcons.forEach(icon => icon.destroy()); // Clear existing icons
+        this.attackIcons = [];
+
+        const spacing = 12;
+        for (let i = 0; i < this.attack; i++) {
+            let attackIcon = this.scene.add.image(0, 0, 'attack_blue').setScale(0.5);
+            this.attackIcons.push(attackIcon);
+        }
+        this.updateAttackIconsPosition();
+    }
+
     updateHeartsPosition() {
         const spacing = 12;
         let startX = this.sprite.x - (this.maxHealth - 1) * spacing / 2;
@@ -70,6 +84,18 @@ class Piece {
 
         this.hearts.forEach((heart, index) => {
             heart.setPosition(startX + index * spacing, startY);
+        });
+    }
+
+    updateAttackIconsPosition() {
+        const spacing = 12;
+
+        // Position attack icons above the piece
+        let startX = this.sprite.x - (this.attack - 1) * spacing / 2;
+        let startY = this.sprite.y + 5 - this.board.tileSize / 2;
+
+        this.attackIcons.forEach((icon, index) => {
+            icon.setPosition(startX + index * spacing, startY);
         });
     }
 
@@ -108,5 +134,8 @@ class Piece {
 
         this.hearts.forEach(heart => heart.destroy()); // Destroy hearts
         this.hearts = [];
+
+        this.attackIcons.forEach(heart => heart.destroy()); // Destroy hearts
+        this.attackIcons = [];
     }
 }

@@ -30,6 +30,8 @@ class VikingChess extends Phaser.Scene {
 
         this.load.image('heart_red', 'assets/heart_full.png');
         this.load.image('heart_grey', 'assets/heart_empty.png');
+
+        this.load.image('attack_blue', 'assets/attack_full.png');
     }
 
     create() {
@@ -1320,8 +1322,16 @@ class VikingChess extends Phaser.Scene {
 
     update() {
         this.kingPiece.updateHeartsPosition();
-        this.playerPieces.forEach(piece => piece.updateHeartsPosition());
-        this.enemyPieces.forEach(piece => piece.updateHeartsPosition());
+        this.kingPiece.updateAttackIconsPosition();
+
+        this.playerPieces.forEach(piece => {
+            piece.updateHeartsPosition();
+            piece.updateAttackIconsPosition();
+        });
+        this.enemyPieces.forEach(piece => {
+            piece.updateHeartsPosition();
+            piece.updateAttackIconsPosition();
+        });
     }
 
     // Add cleanup method to properly destroy all game objects

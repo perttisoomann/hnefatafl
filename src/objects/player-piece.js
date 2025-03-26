@@ -70,6 +70,7 @@ class PlayerPiece extends Piece {
         }
         if (bonus.attack) {
             this.attack = (this.attack || 1) + bonus.attack;
+            this.createAttackIcons();
         }
         if (bonus.moveRange) {
             this.moveRange = (this.moveRange || 1) + bonus.moveRange;
