@@ -13,6 +13,8 @@ class EnemyPiece extends Piece {
 
         super(scene, board, row, col, texture);
 
+        this.level = level;
+
         switch (level) {
             case 1:
                 this.survivalMultiplier = 0.1;

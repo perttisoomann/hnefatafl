@@ -20,12 +20,19 @@ class VikingChess extends Phaser.Scene {
         this.load.image('pawn_piece', 'assets/pawn_piece.png');
         this.load.image('pawn_piece_level2', 'assets/pawn_piece_level2.png');
         this.load.image('pawn_piece_level3', 'assets/pawn_piece_level3.png');
+
+        this.load.image('shieldmaiden_piece', 'assets/shieldmaiden_piece.png');
+        this.load.image('shieldmaiden_piece_level2', 'assets/shieldmaiden_piece_level2.png');
+        this.load.image('shieldmaiden_piece_level3', 'assets/shieldmaiden_piece_level3.png');
+
         this.load.image('enemy_piece', 'assets/enemy_piece.png');
         this.load.image('enemy_piece_level2', 'assets/enemy_piece_level2.png');
         this.load.image('enemy_piece_level3', 'assets/enemy_piece_level3.png');
+
         this.load.image('king_piece', 'assets/king_piece.png');
         this.load.image('king_piece_level2', 'assets/king_piece_level2.png');
         this.load.image('king_piece_level3', 'assets/king_piece_level3.png');
+
         this.load.image('gold', 'assets/gold.png');
         this.load.image('player_win_graphic', 'assets/player_win.png');
         this.load.image('enemy_win_graphic', 'assets/enemy_win.png');
@@ -338,7 +345,7 @@ class VikingChess extends Phaser.Scene {
     movePiece(piece, newRow, newCol) {
         if (!this.selectedPiece) return;
 
-        piece.hasMoved = true;
+        piece.isMoving();
 
         // Update the board data
         this.board.tiles[piece.row][piece.col].piece = null;
@@ -760,7 +767,7 @@ class VikingChess extends Phaser.Scene {
     }
 
     executeEnemyMove(piece, newRow, newCol) {
-        piece.hasMoved = true;
+        piece.isMoving();
 
         // Update the board data
         this.board.tiles[piece.row][piece.col].piece = null;
@@ -931,13 +938,15 @@ class VikingChess extends Phaser.Scene {
             if (checkRow >= 0 && checkRow < this.board.rows &&
                 checkCol >= 0 && checkCol < this.board.cols) {
 
-                const adjacentPiece = this.board.tiles[checkRow][checkCol].piece;
+                const targetPiece = this.board.tiles[checkRow][checkCol].piece;
 
-                // Skip if no piece or piece is same type
-                if (!adjacentPiece) continue;
-                if ((isPlayerPiece && (adjacentPiece instanceof PlayerPiece || adjacentPiece instanceof KingPiece)) ||
-                    (!isPlayerPiece && adjacentPiece instanceof EnemyPiece)) {
-                    if (adjacentPiece instanceof KingPiece) continue; // Allow king to be captured normally
+                // Skip if no piece
+                if (!targetPiece) continue;
+
+                // ... or piece is same type
+                if ((isPlayerPiece && (targetPiece instanceof PlayerPiece || targetPiece instanceof KingPiece)) ||
+                    (!isPlayerPiece && targetPiece instanceof EnemyPiece)) {
+                    if (targetPiece instanceof KingPiece) continue; // Allow king to be captured normally
                     continue;
                 }
 
@@ -954,18 +963,51 @@ class VikingChess extends Phaser.Scene {
                     if ((isPlayerPiece && (sandwichPiece instanceof PlayerPiece || sandwichPiece instanceof KingPiece)) ||
                         (!isPlayerPiece && sandwichPiece instanceof EnemyPiece)) {
 
-                        // Store the pieces involved in this capture for XP calculation
-                        if (isPlayerPiece && adjacentPiece instanceof EnemyPiece) {
-                            // Perform attack animation with both capturing pieces
-                            this.performAttackAnimation(piece, sandwichPiece, adjacentPiece);
+                        const protector = this.getProtector(targetPiece);
+
+                        if (protector) {
+                            this.performProtectionAnimation(protector, piece);
                         } else {
-                            // Enemy capturing player piece
-                            this.performAttackAnimation(piece, sandwichPiece, adjacentPiece);
+                            // Store the pieces involved in this capture for XP calculation
+                            if (isPlayerPiece && targetPiece instanceof EnemyPiece) {
+                                // Perform attack animation with both capturing pieces
+                                this.performAttackAnimation(piece, sandwichPiece, targetPiece);
+                            } else {
+                                // Enemy capturing player piece
+                                this.performAttackAnimation(piece, sandwichPiece, targetPiece);
+                            }
                         }
                     }
                 }
             }
         }
+    }
+
+    getProtector(targetPiece) {
+        const pieces = targetPiece instanceof PlayerPiece ? this.enemyPieces : this.playerPieces;
+        let protector = null;
+
+        pieces.forEach(piece => {
+            if (!protector && piece !== targetPiece) {
+                const protectedTiles = piece.getProtectedTiles();
+
+                if (protectedTiles) {
+                    const exists = protectedTiles.some(
+                        ([row, col]) => row === targetPiece.row && col === targetPiece.col
+                    );
+
+                    if (exists) {
+                        protector = piece;
+                    }
+                }
+            }
+        });
+
+        return protector;
+    }
+
+    performProtectionAnimation(protector, targetPiece) {
+        return;
     }
 
     performAttackAnimation(piece1, piece2, targetPiece) {

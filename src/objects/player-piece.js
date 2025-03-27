@@ -10,7 +10,6 @@ class PlayerPiece extends Piece {
     constructor(scene, board, row, col, texture) {
         super(scene, board, row, col, texture ?? 'pawn_piece');
         this.xp = 0;
-        this.level = 1;
         this.name = generateVikingName();
         this.levelConfig = this.getLevelConfig(); // Get piece-specific level config
 
