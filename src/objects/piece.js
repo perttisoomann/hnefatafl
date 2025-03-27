@@ -6,6 +6,8 @@ class Piece {
         this.col = col;
         let { x, y } = board.getTilePosition(row, col);
         this.sprite = scene.add.sprite(x, y, texture).setOrigin(0.5).setDisplaySize(board.tileSize, board.tileSize);
+        this.canReceivePassiveBonus = true;
+        this.level = 1;
         this.maxHealth = 1;
         this.health = 1;
         this.attack = 1;
@@ -115,15 +117,28 @@ class Piece {
         }
     }
 
+    protected() {
+        this.canReceivePassiveBonus = false;
+    }
+
     heal(amount) {
         this.health = Math.min(this.health + amount, this.maxHealth);
         this.updateHearts();
+    }
+
+    isMoving() {
+        this.hasMoved = true;
+        this.canReceivePassiveBonus = true;
     }
 
     death() {
         this.sprite.destroy();
         this.hearts.forEach(heart => heart.destroy()); // Destroy hearts
         this.hearts = [];
+    }
+
+    getProtectedTiles() {
+        return null;
     }
 
     // Add cleanup method to destroy the sprite
