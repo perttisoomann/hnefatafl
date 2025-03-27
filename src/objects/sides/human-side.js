@@ -1,6 +1,6 @@
 class HumanSide extends Side {
     constructor() {
-        super('Human', false);
+        super('Human', true);
     }
 
     setup(scene, board) {

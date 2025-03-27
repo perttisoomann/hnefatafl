@@ -1,7 +1,7 @@
 class Side {
-    constructor(name, isAI) {
+    constructor(name, isHuman = false) {
         this.name = name;
-        this.isAI = isAI;
+        this.isHuman = isHuman;
         this.pieces = [];
     }
 

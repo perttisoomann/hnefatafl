@@ -67,7 +67,9 @@ class VikingChess extends Phaser.Scene {
 
     processMove() {
 
-        this.nextSide();
+        if (!this.sides[this.activeSide].isHuman) {
+            this.nextSide();
+        }
     }
 
     nextSide() {
@@ -291,8 +293,10 @@ class VikingChess extends Phaser.Scene {
     }
 
     selectPiece(piece) {
-        if (this.gameState !== 'playerTurn') return;
-        if (!(piece instanceof PlayerPiece) && !(piece instanceof KingPiece)) return;
+        if (!this.sides[this.activeSide].isHuman) return;
+
+        if (!(piece instanceof PlayerPiece)) return;
+
         if (this.selectedPiece) {
             this.selectedPiece.sprite.clearTint();
             this.board.clearHighlights();
@@ -303,7 +307,7 @@ class VikingChess extends Phaser.Scene {
 
         this.showSelectedPieceInfo(piece);
 
-        this.updateStatusText(); // Update status to show treasure
+        this.updateStatusText();
     }
 
     updateStatusText() {
