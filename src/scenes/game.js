@@ -118,10 +118,16 @@ class VikingChess extends Phaser.Scene {
 
 
     nextSide() {
+        this.selectedPiece = null;
+        this.selectedRow = null;
+        this.selectedCol = null;
+
         this.activeSide += 1;
         if (this.activeSide >= this.sides.length) {
             this.activeSide = 0;
         }
+
+        this.processState(GameState.PASSIVE_MOVES);
     }
 
     // Create the information panel
@@ -580,13 +586,7 @@ class VikingChess extends Phaser.Scene {
                         return; // Game is over
                     }
 
-                    // Switch turns - now go to passiveEnemyTurn instead of directly to enemyTurn
-                    this.gameState = 'passiveEnemyTurn';
-                    this.statusText.setText('Passive Enemy Turn');
-                    this.updateStatusText();
-
-                    // Process passive enemy turn effects
-                    this.processPassiveEnemyTurn();
+                    this.processState(GameState.NEXT_TURN);
                 };
 
                 // Hook into the performAttackAnimation method to track completions
@@ -1009,6 +1009,8 @@ class VikingChess extends Phaser.Scene {
     }
 
     getProtector(targetPiece) {
+        return null;
+
         const pieces = targetPiece instanceof PlayerPiece ? this.enemyPieces : this.playerPieces;
         let protector = null;
 
