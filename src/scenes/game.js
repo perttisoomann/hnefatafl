@@ -8,6 +8,8 @@ class VikingChess extends Phaser.Scene {
         this.goldGroup = null; // Group to hold gold pieces
         this.playerGold = 0;
         this.infoPanel = null;
+        this.sides = [new HumanSide(), new MonsterSide()];
+        this.activeSide = 0;
     }
 
     preload() {
@@ -44,56 +46,7 @@ class VikingChess extends Phaser.Scene {
 
         this.board = new GameBoard(this);
 
-        const centerCol = Math.floor(this.board.cols / 2);
-        const centerRow = Math.floor(this.board.rows / 2);
-
-        this.kingPiece = new KingPiece(this, this.board, centerRow, centerCol);
-
-        this.playerPieces = [];
-        const playerPositions = [
-            // Cardinal directions
-            [centerRow - 1, centerCol],
-            [centerRow, centerCol - 1],
-            [centerRow, centerCol + 1],
-            [centerRow + 1, centerCol],
-
-            // Diagonals
-            [centerRow - 1, centerCol - 1],
-            [centerRow - 1, centerCol + 1],
-            [centerRow + 1, centerCol - 1],
-            [centerRow + 1, centerCol + 1],
-        ];
-
-        playerPositions.forEach(([row, col]) => {
-            this.playerPieces.push(new PlayerPiece(this, this.board, row, col));
-        });
-
-        this.enemyPieces = [];
-        let enemyPositions = [
-            // Top
-            [0, centerCol - 1],
-            [0, centerCol],
-            [0, centerCol + 1],
-
-            // Bottom
-            [this.board.rows - 1, centerCol - 1],
-            [this.board.rows - 1, centerCol],
-            [this.board.rows - 1, centerCol + 1],
-        ];
-        enemyPositions.forEach(([row, col]) => {
-            this.enemyPieces.push(new EnemyPiece(this, this.board, row, col));
-        });
-
-        enemyPositions = [
-            // Left
-            [centerRow, 0],
-
-            // Right
-            [centerRow, this.board.cols - 1],
-        ];
-        enemyPositions.forEach(([row, col]) => {
-            this.enemyPieces.push(new EnemyPiece(this, this.board, row, col, 1));
-        });
+        this.sides.forEach(side => side.setup(this, this.board));
 
         // Add status text
         this.statusText = this.add.text(
@@ -107,7 +60,21 @@ class VikingChess extends Phaser.Scene {
         this.createInfoPanel();
 
         // Process the passive player turn as soon as the game starts
-        this.processPassivePlayerTurn();
+        // this.processPassivePlayerTurn();
+
+        this.processMove();
+    }
+
+    processMove() {
+
+        this.nextSide();
+    }
+
+    nextSide() {
+        this.activeSide += 1;
+        if (this.activeSide >= this.sides.length) {
+            this.activeSide = 0;
+        }
     }
 
     // Create the information panel
@@ -1321,16 +1288,11 @@ class VikingChess extends Phaser.Scene {
     }
 
     update() {
-        this.kingPiece.updateHeartsPosition();
-        this.kingPiece.updateAttackIconsPosition();
-
-        this.playerPieces.forEach(piece => {
-            piece.updateHeartsPosition();
-            piece.updateAttackIconsPosition();
-        });
-        this.enemyPieces.forEach(piece => {
-            piece.updateHeartsPosition();
-            piece.updateAttackIconsPosition();
+        this.sides.forEach(side => {
+            side.pieces.forEach(piece => {
+                piece.updateHeartsPosition();
+                piece.updateAttackIconsPosition();
+            });
         });
     }
 
