@@ -63,7 +63,9 @@ class GameBoard {
 
                 // Add click event to move the piece
                 this.tiles[row][col].highlight.on('pointerdown', () => {
-                    this.scene.movePiece(piece, row, col);
+                    this.scene.selectedRow = row;
+                    this.scene.selectedCol = col;
+                    this.scene.processState(GameState.MOVE_PIECE);
                 });
             }
         });

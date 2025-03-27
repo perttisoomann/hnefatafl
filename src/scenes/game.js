@@ -1,8 +1,20 @@
+const GameState = Object.freeze({
+    PASSIVE_MOVES: "passiveMoves",
+    ANIMATE_PASSIVE: "animatePassiveMoves",
+    GET_MOVE: "getMove",
+    MOVE_PIECE: "movePiece",
+    CHECK_CAPTURES: "checkCaptures",
+    ANIMATE_CAPTURES: "animateCaptures",
+    NEXT_TURN: "nextTurn"
+});
+
 class VikingChess extends Phaser.Scene {
     constructor() {
         super({ key: 'VikingChess' });
         this.gameState = 'playerTurn';
         this.selectedPiece = null;
+        this.selectedRow = null;
+        this.selectedCol = null;
         this.statusText = null;
         this.restartButton = null;
         this.goldGroup = null; // Group to hold gold pieces
@@ -69,15 +81,41 @@ class VikingChess extends Phaser.Scene {
         // Process the passive player turn as soon as the game starts
         // this.processPassivePlayerTurn();
 
-        this.processMove();
+        this.processState(GameState.GET_MOVE);
     }
 
-    processMove() {
+    processState(state) {
+        switch (state) {
+            case GameState.PASSIVE_MOVES:
+                // this.calculatePassiveMoves();
+                break;
+            case GameState.ANIMATE_PASSIVE:
+                // this.animatePassiveMoves();
+                break;
+            case GameState.GET_MOVE:
+                if (!this.sides[this.activeSide].isHuman) {
 
-        if (!this.sides[this.activeSide].isHuman) {
-            this.nextSide();
+                }
+                break;
+            case GameState.MOVE_PIECE:
+                this.movePiece(this.selectedPiece, this.selectedRow, this.selectedCol);
+                break;
+            case GameState.CHECK_CAPTURES:
+                // this.checkCaptures();
+                break;
+            case GameState.ANIMATE_CAPTURES:
+                // this.animateCaptures();
+                break;
+            case GameState.NEXT_TURN:
+                this.checkWinConditions();
+                if (!this.sides[this.activeSide].isHuman) {
+                    this.nextSide();
+                }
+                break;
         }
     }
+
+
 
     nextSide() {
         this.activeSide += 1;
@@ -343,8 +381,6 @@ class VikingChess extends Phaser.Scene {
     }
 
     movePiece(piece, newRow, newCol) {
-        if (!this.selectedPiece) return;
-
         piece.isMoving();
 
         // Update the board data
@@ -617,8 +653,6 @@ class VikingChess extends Phaser.Scene {
 
     // enemyTurn should only be called during enemyTurn state
     enemyTurn() {
-        if (this.gameState !== 'enemyTurn') return;
-
         this.attackOpportunityMap = this.applyForesight(this.computeAttackOpportunityMap(), 2);
         this.attackSetupMap = this.applyForesight(this.computeAttackSetupMap(), 2);
 
@@ -646,19 +680,10 @@ class VikingChess extends Phaser.Scene {
         allMoves.sort((a, b) => b.score - a.score);
 
         if (allMoves.length > 0) {
-            // Get the best move (or one of the top moves with some randomness)
             const selectedMove = allMoves[0];
-
-            // Execute the move
-            this.executeEnemyMove(selectedMove.piece, selectedMove.row, selectedMove.col);
+            this.movePiece(selectedMove.piece, selectedMove.row, selectedMove.col);
         } else {
-            // No moves available, switch back to passive player turn
-            this.gameState = 'passivePlayerTurn';
-            this.statusText.setText('Passive Player Turn');
-            this.updateStatusText();
-
-            // Process passive player turn
-            this.processPassivePlayerTurn();
+            this.processState(GameState.NEXT_TURN);
         }
     }
 
@@ -1147,48 +1172,50 @@ class VikingChess extends Phaser.Scene {
     }
 
     checkWinConditions() {
-        // Check if the King has reached a corner (player wins)
-        const kingRow = this.kingPiece.row;
-        const kingCol = this.kingPiece.col;
-        const boardSize = this.board.rows - 1; // Assuming square board
+        for (let i = 0; i < this.sides.length; i++) {
+            if (this.sides[i].isHuman) {
+                if (this.sides[i].pieces.length === 0) {
+                    this.endGame("Enemy Wins! All defenders are captured!", false);
+                    return true;
+                }
 
-        const isCorner =
-            (kingRow === 0 && kingCol === 0) ||  // Top-left corner
-            (kingRow === 0 && kingCol === boardSize) ||  // Top-right corner
-            (kingRow === boardSize && kingCol === 0) ||  // Bottom-left corner
-            (kingRow === boardSize && kingCol === boardSize);  // Bottom-right corner
+                const king = this.sides[i].pieces.find(item => item instanceof KingPiece);
 
-        if (isCorner) {
-            this.endGame("Player Wins! King escaped!");
-            return true;
-        }
+                if (!king) {
+                    this.endGame("Enemy Wins! King is captured!", false);
+                    return true;
+                }
 
-        // Check if player has no pieces left
-        if (this.playerPieces.length === 0) {
-            this.endGame("Enemy Wins! All defenders are captured!");
-            return true;
-        }
+                const kingRow = king.row;
+                const kingCol = king.col;
+                const boardSize = this.board.rows - 1; // Assuming square board
 
-        // Check if the King has been captured
-        if (!this.kingPiece.sprite || !this.kingPiece.sprite.active) {
-            this.endGame("Enemy Wins! King is captured!");
-            return true;
-        }
+                const isCorner =
+                    (kingRow === 0 && kingCol === 0) ||  // Top-left corner
+                    (kingRow === 0 && kingCol === boardSize) ||  // Top-right corner
+                    (kingRow === boardSize && kingCol === 0) ||  // Bottom-left corner
+                    (kingRow === boardSize && kingCol === boardSize);  // Bottom-right corner
 
-        // Check if enemy has no pieces left
-        if (this.enemyPieces.length === 0) {
-            this.endGame("Player Wins! All attackers are defeated!");
-            return true;
+                if (isCorner) {
+                    this.endGame("Player Wins! King escaped!");
+                    return true;
+                }
+            } else {
+                if (this.sides[i].pieces.length === 0) {
+                    this.endGame("Player Wins! All attackers are defeated!");
+                    return true;
+                }
+            }
         }
 
         return false;
     }
 
-    endGame(message) {
+    endGame(message, playerWon = true) {
         this.gameState = 'gameOver';
         this.statusText.setText(message);
 
-        if (message.includes("Player Wins")) {
+        if (playerWon) {
             this.winGraphic = this.add.image(
                 this.cameras.main.width / 2,
                 this.cameras.main.height / 2 - 50,
