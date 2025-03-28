@@ -22,6 +22,9 @@ class VikingChess extends Phaser.Scene {
         this.infoPanel = null;
         this.sides = [new HumanSide(), new MonsterSide()];
         this.activeSide = 0;
+        this.animationCheckCounter = 0;
+        this.state = null;
+        this.nextState = null;
     }
 
     preload() {
@@ -85,8 +88,10 @@ class VikingChess extends Phaser.Scene {
     }
 
     processState(state) {
-        console.log('SIDE: ' + this.activeSide + ' STATE: ' + state);
-        switch (state) {
+        this.state = state;
+        this.nextState = null;
+        console.log('SIDE: ' + this.activeSide + ' STATE: ' + this.state);
+        switch (this.state) {
             case GameState.PASSIVE_MOVES:
                 // this.calculatePassiveMoves();
                 this.processState(GameState.ANIMATE_PASSIVE);
@@ -102,13 +107,14 @@ class VikingChess extends Phaser.Scene {
                 break;
             case GameState.MOVE_PIECE:
                 this.board.clearHighlights();
+                this.animationCheckCounter = 15;
+                this.nextState = GameState.CHECK_CAPTURES;
                 this.movePiece(this.selectedPiece, this.selectedRow, this.selectedCol);
                 break;
             case GameState.CHECK_CAPTURES:
+                this.animationCheckCounter = 15;
+                this.nextState = GameState.NEXT_TURN;
                 this.checkCaptures(this.selectedPiece);
-                break;
-            case GameState.ANIMATE_CAPTURES:
-                // this.animateCaptures();
                 break;
             case GameState.NEXT_TURN:
                 this.checkWinConditions();
@@ -116,8 +122,6 @@ class VikingChess extends Phaser.Scene {
                 break;
         }
     }
-
-
 
     nextSide() {
         this.selectedPiece = null;
@@ -1008,14 +1012,11 @@ class VikingChess extends Phaser.Scene {
 
                         // TODO: check for aura protection here?
 
-                        this.processState(GameState.ANIMATE_CAPTURES);
                         this.performAttackAnimation(piece, sandwichPiece, targetPiece);
                     }
                 }
             }
         }
-
-        this.processState(GameState.NEXT_TURN);
     }
 
     getProtector(targetPiece) {
@@ -1171,6 +1172,8 @@ class VikingChess extends Phaser.Scene {
                 }
 
                 piece.side.pieces = piece.side.pieces.filter(p => p !== piece);
+
+
             }
         });
     }
@@ -1379,6 +1382,25 @@ class VikingChess extends Phaser.Scene {
                 piece.updateAttackIconsPosition();
             });
         });
+
+        if (this.animationCheckCounter > 0) {
+            this.animationCheckCounter -= 1;
+
+            if (this.animationCheckCounter <= 0) {
+                if (this.hasActiveAnimations()) {
+                    // Reset animation check timer
+                    this.animationCheckCounter = 15;
+                } else {
+                    if (this.nextState) {
+                        this.processState(this.nextState);
+                    }
+                }
+            }
+        }
+    }
+
+    hasActiveAnimations() {
+        return false;
     }
 
     // Add cleanup method to properly destroy all game objects
