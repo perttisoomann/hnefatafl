@@ -1151,15 +1151,13 @@ class VikingChess extends Phaser.Scene {
                 // Remove the sprite
                 piece.death();
 
-                // Remove from arrays
-                if (piece instanceof PlayerPiece) {
-                    this.playerPieces = this.playerPieces.filter(p => p !== piece);
-                } else if (piece instanceof EnemyPiece) {
-                    this.enemyPieces = this.enemyPieces.filter(p => p !== piece);
+                if (piece instanceof EnemyPiece) {
                     if (Math.random() < 0.66) {
                         this.spawnGold(piece.row, piece.col);
                     }
                 }
+
+                piece.side.pieces = piece.side.pieces.filter(p => p !== piece);
             }
         });
     }
