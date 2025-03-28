@@ -88,13 +88,15 @@ class VikingChess extends Phaser.Scene {
         switch (state) {
             case GameState.PASSIVE_MOVES:
                 // this.calculatePassiveMoves();
+                this.processState(GameState.ANIMATE_PASSIVE);
                 break;
             case GameState.ANIMATE_PASSIVE:
                 // this.animatePassiveMoves();
+                this.processState(GameState.GET_MOVE);
                 break;
             case GameState.GET_MOVE:
                 if (!this.sides[this.activeSide].isHuman) {
-
+                    this.enemyTurn();
                 }
                 break;
             case GameState.MOVE_PIECE:
@@ -108,9 +110,7 @@ class VikingChess extends Phaser.Scene {
                 break;
             case GameState.NEXT_TURN:
                 this.checkWinConditions();
-                if (!this.sides[this.activeSide].isHuman) {
-                    this.nextSide();
-                }
+                this.nextSide();
                 break;
         }
     }
@@ -489,7 +489,9 @@ class VikingChess extends Phaser.Scene {
                 }
 
                 // Clear the selection and highlights
-                this.selectedPiece.sprite.clearTint();
+                if (this.selectedPiece) {
+                    this.selectedPiece.sprite.clearTint();
+                }
                 this.board.clearHighlights();
                 this.selectedPiece = null;
                 this.updateStatusText(); // Update status after move
@@ -581,11 +583,6 @@ class VikingChess extends Phaser.Scene {
 
                 // Function to call after captures are complete
                 const proceedAfterCaptures = () => {
-                    // Check win conditions
-                    if (this.checkWinConditions()) {
-                        return; // Game is over
-                    }
-
                     this.processState(GameState.NEXT_TURN);
                 };
 
@@ -659,7 +656,7 @@ class VikingChess extends Phaser.Scene {
         // Find all possible moves for all enemy pieces
         let allMoves = [];
 
-        this.enemyPieces.forEach(piece => {
+        this.sides[this.activeSide].pieces.forEach(piece => {
             if (!piece.sprite.active) return; // Skip captured pieces
 
             const validMoves = piece.getValidMoves();
