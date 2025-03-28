@@ -1,6 +1,6 @@
 class KingPiece extends PlayerPiece {
-    constructor(scene, board, row, col) {
-        super(scene, board, row, col, 'king_piece');
+    constructor(scene, board, side, row, col) {
+        super(scene, board, side, row, col, 'king_piece');
         this.xp = 0; // Initialize XP for king piece too
         this.xpText = null;
         this.name = generateVikingName();

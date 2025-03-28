@@ -1,5 +1,5 @@
 class EnemyPiece extends Piece {
-    constructor(scene, board, row, col, level = 1) {
+    constructor(scene, board, side, row, col, level = 1) {
         let texture = 'enemy_piece';
 
         switch (level) {
@@ -11,7 +11,7 @@ class EnemyPiece extends Piece {
                 break;
         }
 
-        super(scene, board, row, col, texture);
+        super(scene, board, side, row, col, texture);
 
         this.level = level;
 

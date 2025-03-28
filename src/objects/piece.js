@@ -1,7 +1,8 @@
 class Piece {
-    constructor(scene, board, row, col, texture) {
+    constructor(scene, board, side, row, col, texture) {
         this.scene = scene;
         this.board = board;
+        this.side = side;
         this.row = row;
         this.col = col;
         let { x, y } = board.getTilePosition(row, col);

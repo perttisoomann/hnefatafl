@@ -19,7 +19,7 @@ class MonsterSide extends Side {
             [board.rows - 1, centerCol + 1],
         ];
         enemyPositions.forEach(([row, col]) => {
-            this.addPiece(new EnemyPiece(scene, board, row, col));
+            this.addPiece(new EnemyPiece(scene, board, this, row, col));
         });
 
         enemyPositions = [
@@ -30,7 +30,7 @@ class MonsterSide extends Side {
             [centerRow, board.cols - 1],
         ];
         enemyPositions.forEach(([row, col]) => {
-            this.addPiece(new EnemyPiece(scene, board, row, col, 1));
+            this.addPiece(new EnemyPiece(scene, board, this, row, col, 1));
         });
     }
 }
