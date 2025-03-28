@@ -85,6 +85,7 @@ class VikingChess extends Phaser.Scene {
     }
 
     processState(state) {
+        console.log('SIDE: ' + this.activeSide + ' STATE: ' + state);
         switch (state) {
             case GameState.PASSIVE_MOVES:
                 // this.calculatePassiveMoves();
@@ -100,10 +101,11 @@ class VikingChess extends Phaser.Scene {
                 }
                 break;
             case GameState.MOVE_PIECE:
+                this.board.clearHighlights();
                 this.movePiece(this.selectedPiece, this.selectedRow, this.selectedCol);
                 break;
             case GameState.CHECK_CAPTURES:
-                // this.checkCaptures();
+                this.checkCaptures(this.selectedPiece);
                 break;
             case GameState.ANIMATE_CAPTURES:
                 // this.animateCaptures();
@@ -352,6 +354,7 @@ class VikingChess extends Phaser.Scene {
             this.selectedPiece.sprite.clearTint();
             this.board.clearHighlights();
         }
+
         this.selectedPiece = piece;
         this.selectedPiece.sprite.setTint(0xffff00);
         this.board.highlightTiles(piece.getValidMoves(), piece);
@@ -476,7 +479,7 @@ class VikingChess extends Phaser.Scene {
                 piece.col = newCol;
 
                 // Update XP text position if it's a player piece
-                if ((piece instanceof PlayerPiece || piece instanceof KingPiece) && piece.xpText) {
+                if ((piece instanceof PlayerPiece) && piece.xpText) {
                     piece.xpText.setPosition(
                         piece.sprite.x,
                         piece.sprite.y + this.board.tileSize / 2 + 5
@@ -484,18 +487,25 @@ class VikingChess extends Phaser.Scene {
                 }
 
                 // Check for gold pickup
-                if (piece instanceof PlayerPiece || piece instanceof KingPiece) {
+                if (piece instanceof PlayerPiece) {
                     this.checkGoldPickup(piece);
                 }
 
+
+                this.processState(GameState.CHECK_CAPTURES);
+
+                /*
                 // Clear the selection and highlights
                 if (this.selectedPiece) {
                     this.selectedPiece.sprite.clearTint();
                 }
-                this.board.clearHighlights();
+
                 this.selectedPiece = null;
                 this.updateStatusText(); // Update status after move
 
+                 */
+
+                /*
                 // Update info panel if piece is currently hovered
                 if (piece === this.hoveredPiece) {
                     this.showPieceInfo(piece);
@@ -506,80 +516,7 @@ class VikingChess extends Phaser.Scene {
                 let captureAnimationComplete = false;
 
                 // Create a modified checkCaptures that tracks completion
-                const checkCapturesWithCallback = () => {
-                    const directions = [
-                        [0, 1],  // Right
-                        [0, -1], // Left
-                        [1, 0],  // Down
-                        [-1, 0]  // Up
-                    ];
 
-                    const row = piece.row;
-                    const col = piece.col;
-                    const isPlayerPiece = piece instanceof PlayerPiece || piece instanceof KingPiece;
-
-                    // First check if any captures will be performed
-                    let willCaptureAny = false;
-
-                    for (const [dx, dy] of directions) {
-                        const checkRow = row + dx;
-                        const checkCol = col + dy;
-
-                        // Check if there's an adjacent piece to capture
-                        if (checkRow >= 0 && checkRow < this.board.rows &&
-                            checkCol >= 0 && checkCol < this.board.cols) {
-
-                            const adjacentPiece = this.board.tiles[checkRow][checkCol].piece;
-
-                            // Skip if no piece or piece is same type
-                            if (!adjacentPiece) continue;
-                            if ((isPlayerPiece && (adjacentPiece instanceof PlayerPiece || adjacentPiece instanceof KingPiece)) ||
-                                (!isPlayerPiece && adjacentPiece instanceof EnemyPiece)) continue;
-
-                            // Don't capture the king with this method
-                            if (adjacentPiece instanceof KingPiece) continue;
-
-                            // Check for sandwiching piece
-                            const sandwichRow = checkRow + dx;
-                            const sandwichCol = checkCol + dy;
-
-                            if (sandwichRow >= 0 && sandwichRow < this.board.rows &&
-                                sandwichCol >= 0 && sandwichCol < this.board.cols) {
-
-                                const sandwichPiece = this.board.tiles[sandwichRow][sandwichCol].piece;
-
-                                // If the sandwiching piece is of the same type as the current piece
-                                if ((isPlayerPiece && (sandwichPiece instanceof PlayerPiece || sandwichPiece instanceof KingPiece)) ||
-                                    (!isPlayerPiece && sandwichPiece instanceof EnemyPiece)) {
-
-                                    willCaptureAny = true;
-                                    break;
-                                }
-                            }
-                        }
-                    }
-
-                    // If we're not capturing anything, proceed directly to next steps
-                    if (!willCaptureAny) {
-                        proceedAfterCaptures();
-                        return;
-                    }
-
-                    // If we are capturing, set flag and create a timeout
-                    capturesInProgress = true;
-
-                    // Now perform the actual captures
-                    this.checkCaptures(piece);
-
-                    // Set a timeout for when animations should be complete
-                    // This is a fallback in case capture animations don't trigger completion
-                    this.time.delayedCall(1200, () => {
-                        if (capturesInProgress) {
-                            capturesInProgress = false;
-                            proceedAfterCaptures();
-                        }
-                    });
-                };
 
                 // Function to call after captures are complete
                 const proceedAfterCaptures = () => {
@@ -609,12 +546,93 @@ class VikingChess extends Phaser.Scene {
                 this.time.delayedCall(1500, () => {
                     this.performAttackAnimation = originalPerformAttackAnimation;
                 });
+
+
+                 */
             }
         });
 
         // Start the timeline
         timeline.play();
     }
+
+    /*
+    checkCaptures(){
+        const directions = [
+            [0, 1],  // Right
+            [0, -1], // Left
+            [1, 0],  // Down
+            [-1, 0]  // Up
+        ];
+
+        const row = this.selectedRow;
+        const col = this.selectedCol;
+        const isPlayerPiece = this.selectedPiece instanceof PlayerPiece;
+
+        // First check if any captures will be performed
+        let willCaptureAny = false;
+
+        for (const [dx, dy] of directions) {
+            const checkRow = row + dx;
+            const checkCol = col + dy;
+
+            // Check if there's an adjacent piece to capture
+            if (checkRow >= 0 && checkRow < this.board.rows &&
+                checkCol >= 0 && checkCol < this.board.cols) {
+
+                const adjacentPiece = this.board.tiles[checkRow][checkCol].piece;
+
+                // Skip if no piece or piece is same type
+                if (!adjacentPiece) continue;
+                if ((isPlayerPiece && (adjacentPiece instanceof PlayerPiece || adjacentPiece instanceof KingPiece)) ||
+                    (!isPlayerPiece && adjacentPiece instanceof EnemyPiece)) continue;
+
+                // Don't capture the king with this method
+                if (adjacentPiece instanceof KingPiece) continue;
+
+                // Check for sandwiching piece
+                const sandwichRow = checkRow + dx;
+                const sandwichCol = checkCol + dy;
+
+                if (sandwichRow >= 0 && sandwichRow < this.board.rows &&
+                    sandwichCol >= 0 && sandwichCol < this.board.cols) {
+
+                    const sandwichPiece = this.board.tiles[sandwichRow][sandwichCol].piece;
+
+                    // If the sandwiching piece is of the same type as the current piece
+                    if ((isPlayerPiece && (sandwichPiece instanceof PlayerPiece)) ||
+                        (!isPlayerPiece && sandwichPiece instanceof EnemyPiece)) {
+
+                        willCaptureAny = true;
+                        break;
+                    }
+                }
+            }
+        }
+
+        // If we're not capturing anything, proceed directly to next steps
+        if (!willCaptureAny) {
+            proceedAfterCaptures();
+            return;
+        }
+
+        // If we are capturing, set flag and create a timeout
+        capturesInProgress = true;
+
+        // Now perform the actual captures
+        this.checkCaptures(piece);
+
+        // Set a timeout for when animations should be complete
+        // This is a fallback in case capture animations don't trigger completion
+        this.time.delayedCall(1200, () => {
+            if (capturesInProgress) {
+                capturesInProgress = false;
+                proceedAfterCaptures();
+            }
+        });
+    };
+    */
+
 
     // Rest of the methods remain largely unchanged
 
@@ -678,7 +696,10 @@ class VikingChess extends Phaser.Scene {
 
         if (allMoves.length > 0) {
             const selectedMove = allMoves[0];
-            this.movePiece(selectedMove.piece, selectedMove.row, selectedMove.col);
+            this.selectedPiece = selectedMove.piece;
+            this.selectedRow = selectedMove.row;
+            this.selectedCol = selectedMove.col;
+            this.processState(GameState.MOVE_PIECE);
         } else {
             this.processState(GameState.NEXT_TURN);
         }
@@ -982,27 +1003,19 @@ class VikingChess extends Phaser.Scene {
                     const sandwichPiece = this.board.tiles[sandwichRow][sandwichCol].piece;
 
                     // If the sandwiching piece is of the same type as the current piece
-                    if ((isPlayerPiece && (sandwichPiece instanceof PlayerPiece || sandwichPiece instanceof KingPiece)) ||
+                    if ((isPlayerPiece && (sandwichPiece instanceof PlayerPiece)) ||
                         (!isPlayerPiece && sandwichPiece instanceof EnemyPiece)) {
 
-                        const protector = this.getProtector(targetPiece);
+                        // TODO: check for aura protection here?
 
-                        if (protector) {
-                            this.performProtectionAnimation(protector, piece);
-                        } else {
-                            // Store the pieces involved in this capture for XP calculation
-                            if (isPlayerPiece && targetPiece instanceof EnemyPiece) {
-                                // Perform attack animation with both capturing pieces
-                                this.performAttackAnimation(piece, sandwichPiece, targetPiece);
-                            } else {
-                                // Enemy capturing player piece
-                                this.performAttackAnimation(piece, sandwichPiece, targetPiece);
-                            }
-                        }
+                        this.processState(GameState.ANIMATE_CAPTURES);
+                        this.performAttackAnimation(piece, sandwichPiece, targetPiece);
                     }
                 }
             }
         }
+
+        this.processState(GameState.NEXT_TURN);
     }
 
     getProtector(targetPiece) {
