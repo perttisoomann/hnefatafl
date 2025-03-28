@@ -1265,9 +1265,11 @@ class VikingChess extends Phaser.Scene {
     resetGameWithCurrentPlayerPieces() {
         // Clean up everything except player pieces
         if (this.restartButton) this.restartButton.destroy();
+
         if (this.enemyPieces) {
             this.enemyPieces.forEach(piece => piece.cleanup());
         }
+
         if (this.winGraphic) this.winGraphic.destroy();
         if (this.goldGroup) this.goldGroup.destroy(true, true);
         this.tweens.killAll();
