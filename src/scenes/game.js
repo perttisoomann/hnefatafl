@@ -1,10 +1,9 @@
 const GameState = Object.freeze({
     PASSIVE_MOVES: "passiveMoves",
-    ANIMATE_PASSIVE: "animatePassiveMoves",
     GET_MOVE: "getMove",
     MOVE_PIECE: "movePiece",
     CHECK_CAPTURES: "checkCaptures",
-    ANIMATE_CAPTURES: "animateCaptures",
+    AWAIT_ACTIONS: "awaitActions",
     NEXT_TURN: "nextTurn"
 });
 
@@ -90,14 +89,10 @@ class VikingChess extends Phaser.Scene {
     processState(state) {
         this.state = state;
         this.nextState = null;
-        console.log('SIDE: ' + this.activeSide + ' STATE: ' + this.state);
+        console.log('SIDE: ' + this.sides[this.activeSide].name + ' STATE: ' + this.state);
         switch (this.state) {
             case GameState.PASSIVE_MOVES:
                 // this.calculatePassiveMoves();
-                this.processState(GameState.ANIMATE_PASSIVE);
-                break;
-            case GameState.ANIMATE_PASSIVE:
-                // this.animatePassiveMoves();
                 this.processState(GameState.GET_MOVE);
                 break;
             case GameState.GET_MOVE:
@@ -107,20 +102,25 @@ class VikingChess extends Phaser.Scene {
                 break;
             case GameState.MOVE_PIECE:
                 this.board.clearHighlights();
-                this.animationCheckCounter = 15;
-                this.nextState = GameState.CHECK_CAPTURES;
                 this.movePiece(this.selectedPiece, this.selectedRow, this.selectedCol);
+                this.waitForActionsToComplete(GameState.CHECK_CAPTURES);
                 break;
             case GameState.CHECK_CAPTURES:
-                this.animationCheckCounter = 15;
-                this.nextState = GameState.NEXT_TURN;
                 this.checkCaptures(this.selectedPiece);
+                this.waitForActionsToComplete(GameState.NEXT_TURN);
                 break;
             case GameState.NEXT_TURN:
                 this.checkWinConditions();
                 this.nextSide();
                 break;
         }
+    }
+
+    waitForActionsToComplete(nextState, counter = 15) {
+        this.state = GameState.AWAIT_ACTIONS;
+        this.nextState = nextState;
+        this.animationCheckCounter = counter;
+        console.log('SIDE: ' + this.sides[this.activeSide].name + ' STATE: ' + this.state);
     }
 
     nextSide() {
@@ -394,6 +394,7 @@ class VikingChess extends Phaser.Scene {
     }
 
     movePiece(piece, newRow, newCol) {
+        piece.inAction = true;
         piece.isMoving();
 
         // Update the board data
@@ -439,7 +440,7 @@ class VikingChess extends Phaser.Scene {
 
         // Add hop animations through each tile in the path
         path.forEach((pos, index) => {
-            const hopDuration = 100; // Base duration for each hop
+            const hopDuration = 75; // Base duration for each hop
 
             // Add a hop tween for this tile
             timeline.add({
@@ -476,7 +477,7 @@ class VikingChess extends Phaser.Scene {
             x: endPos.x,
             y: endPos.y,
             rotation: 0,
-            duration: 100,
+            duration: 75,
             onComplete: () => {
                 // Update piece position
                 piece.row = newRow;
@@ -495,8 +496,9 @@ class VikingChess extends Phaser.Scene {
                     this.checkGoldPickup(piece);
                 }
 
+                piece.inAction = false;
 
-                this.processState(GameState.CHECK_CAPTURES);
+                // this.processState(GameState.CHECK_CAPTURES);
 
                 /*
                 // Clear the selection and highlights
@@ -1049,6 +1051,10 @@ class VikingChess extends Phaser.Scene {
     }
 
     performAttackAnimation(piece1, piece2, targetPiece) {
+        piece1.isActive = true;
+        piece2.isActive = true;
+        targetPiece.isActive = true;
+
         // Save original positions
         const piece1OrigX = piece1.sprite.x;
         const piece1OrigY = piece1.sprite.y;
@@ -1086,21 +1092,6 @@ class VikingChess extends Phaser.Scene {
             this.cameras.main.shake(100, 0.01);
         };
 
-        const checkBothComplete = () => {
-            completionCount++;
-            if (completionCount === 1) {
-                // Create blood effect after first hit
-                createBloodEffect();
-            }
-            if (completionCount === 2) {
-                // Create second blood effect after second hit
-                createBloodEffect();
-
-                // After both attacks complete, capture the piece
-                this.capturePiece(targetPiece, attackerPieces);
-            }
-        };
-
         // First attacker thrusts forward (parallel)
         this.tweens.add({
             targets: piece1.sprite,
@@ -1109,7 +1100,10 @@ class VikingChess extends Phaser.Scene {
             duration: 60,
             ease: 'Power1',
             yoyo: true,
-            onComplete: checkBothComplete
+            onComplete: () => {
+                piece1.isActive = false;
+                createBloodEffect();
+            }
         });
 
         // Second attacker thrusts forward (parallel)
@@ -1121,7 +1115,11 @@ class VikingChess extends Phaser.Scene {
             ease: 'Power1',
             yoyo: true,
             delay: 50,
-            onComplete: checkBothComplete
+            onComplete: () => {
+                piece2.isActive = false;
+                createBloodEffect();
+                this.capturePiece(targetPiece, attackerPieces);
+            }
         });
     }
 
@@ -1143,6 +1141,7 @@ class VikingChess extends Phaser.Scene {
         piece.takeDamage(maxAttack);
 
         if (piece.health > 0) {
+            piece.isActive = false;
             return;
         }
 
@@ -1172,8 +1171,6 @@ class VikingChess extends Phaser.Scene {
                 }
 
                 piece.side.pieces = piece.side.pieces.filter(p => p !== piece);
-
-
             }
         });
     }
@@ -1383,23 +1380,25 @@ class VikingChess extends Phaser.Scene {
             });
         });
 
-        if (this.animationCheckCounter > 0) {
+        if (this.state === GameState.AWAIT_ACTIONS) {
             this.animationCheckCounter -= 1;
 
             if (this.animationCheckCounter <= 0) {
-                if (this.hasActiveAnimations()) {
-                    // Reset animation check timer
+                if (this.hasActionInProgress()) {
                     this.animationCheckCounter = 15;
                 } else {
-                    if (this.nextState) {
-                        this.processState(this.nextState);
-                    }
+                    this.processState(this.nextState);
                 }
             }
         }
     }
 
-    hasActiveAnimations() {
+    hasActionInProgress() {
+        for (const side of this.sides) {
+            if (side.pieces.some(piece => piece.inAction === true)) {
+                return true;
+            }
+        }
         return false;
     }
 
