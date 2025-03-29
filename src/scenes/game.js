@@ -92,8 +92,8 @@ class VikingChess extends Phaser.Scene {
         console.log('SIDE: ' + this.sides[this.activeSide].name + ' STATE: ' + this.state);
         switch (this.state) {
             case GameState.PASSIVE_MOVES:
-                // this.calculatePassiveMoves();
-                this.processState(GameState.GET_MOVE);
+                this.processPassiveTurn();
+                this.waitForActionsToComplete(GameState.GET_MOVE);
                 break;
             case GameState.GET_MOVE:
                 if (!this.sides[this.activeSide].isHuman) {
@@ -163,16 +163,15 @@ class VikingChess extends Phaser.Scene {
         this.selectedInfoPanel.hide();
     }
 
-    processPassivePlayerTurn() {
-        if (this.gameState !== 'passivePlayerTurn') return;
+    processPassiveTurn() {
+        this.statusText.setText('Passive Turn');
 
-        this.statusText.setText('Passive Player Turn');
-
-        // Check for any enemy pieces that are sandwiched between player pieces
         let capturesFound = false;
 
+        const allEnemyPieces = this.getEnemyPieces();
+
         // Check all enemy pieces
-        for (const enemyPiece of this.enemyPieces) {
+        for (const enemyPiece of allEnemyPieces) {
             if (!enemyPiece.sprite || !enemyPiece.sprite.active || enemyPiece.hasMoved) continue;
 
             const row = enemyPiece.row;
@@ -203,25 +202,17 @@ class VikingChess extends Phaser.Scene {
                     continue;
                 }
 
-                // Get pieces on both sides
                 const side1Piece = this.board.tiles[side1Row][side1Col].piece;
                 const side2Piece = this.board.tiles[side2Row][side2Col].piece;
 
-                // Check if enemy is sandwiched between player pieces
-                if ((side1Piece instanceof PlayerPiece || side1Piece instanceof KingPiece) &&
-                    (side2Piece instanceof PlayerPiece || side2Piece instanceof KingPiece)) {
-
+                if (
+                    side1Piece
+                    && side2Piece
+                    && side1Piece.side === this.sides[this.activeSide]
+                    && side2Piece.side === this.sides[this.activeSide]
+                ) {
                     capturesFound = true;
-
-                    // Store the pieces involved for XP calculation
-                    const attackerPieces = [side1Piece, side2Piece];
-
-                    // First show the attack animation
-                    this.time.delayedCall(500, () => {
-                        this.performAttackAnimation(side1Piece, side2Piece, enemyPiece);
-                    });
-
-                    // We found a sandwich capture - break out of directions loop
+                    this.performAttackAnimation(side1Piece, side2Piece, enemyPiece);
                     break;
                 }
             }
@@ -318,25 +309,12 @@ class VikingChess extends Phaser.Scene {
         }
 
         this.resetMovementFlags();
-
-        // Use a delayed call to transition to enemy turn after passive effects
-        // Add a longer delay if captures were found to allow animations to complete
-        const delayTime = capturesFound ? 1000 : 500;
-
-        this.time.delayedCall(delayTime, () => {
-            // After passive effects, transition to active enemy turn
-            this.gameState = 'enemyTurn';
-            this.statusText.setText('Enemy Turn');
-            this.updateStatusText();
-
-            // Start enemy turn with a slight delay
-            this.time.delayedCall(800, this.enemyTurn, [], this);
-        }, [], this);
     }
 
     resetMovementFlags() {
-        this.playerPieces.forEach(piece => piece.hasMoved = false);
-        this.enemyPieces.forEach(piece => piece.hasMoved = false);
+        this.sides.forEach(side => {
+            side.pieces.forEach(piece => piece.hasMoved = false);
+        });
     }
 
     // Show the info panel with piece details - Unchanged
@@ -1400,6 +1378,11 @@ class VikingChess extends Phaser.Scene {
             }
         }
         return false;
+    }
+
+    getEnemyPieces() {
+        return this.sides.filter(side => side !== this.sides[this.activeSide])
+            .flatMap(side => side.pieces);
     }
 
     // Add cleanup method to properly destroy all game objects
