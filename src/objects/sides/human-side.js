@@ -33,6 +33,7 @@ class HumanSide extends Side {
         this.objectives = [];
 
         // TODO: King reaches corners
-        // TODO: Any enemy pieces left is 1 or less
+
+        this.objectives.push(new EliminateOppositionObjective(this, 1));
     }
 }
