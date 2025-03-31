@@ -67,7 +67,10 @@ class VikingChess extends Phaser.Scene {
 
         this.board = new GameBoard(this);
 
-        this.sides.forEach(side => side.setup(this, this.board));
+        this.sides.forEach(side => {
+            side.setup(this, this.board);
+            side.setupObjectives(this);
+        });
 
         // Add status text
         this.statusText = this.add.text(

@@ -33,4 +33,12 @@ class MonsterSide extends Side {
             this.addPiece(new EnemyPiece(scene, board, this, row, col, 1));
         });
     }
+
+    setupObjectives(scene)
+    {
+        this.objectives = [];
+
+        // TODO: capture human king
+        // TODO: Any enemy pieces left is 1 or less
+    }
 }

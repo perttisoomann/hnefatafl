@@ -27,4 +27,12 @@ class HumanSide extends Side {
             this.addPiece(new PlayerPiece(scene, board, this, row, col));
         });
     }
+
+    setupObjectives(scene)
+    {
+        this.objectives = [];
+
+        // TODO: King reaches corners
+        // TODO: Any enemy pieces left is 1 or less
+    }
 }
