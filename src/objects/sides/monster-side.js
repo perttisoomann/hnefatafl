@@ -1,6 +1,6 @@
 class MonsterSide extends Side {
     constructor() {
-        super('Monster');
+        super('Monster', Species.MONSTER);
     }
 
     setup(scene, board) {

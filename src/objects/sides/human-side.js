@@ -1,6 +1,6 @@
 class HumanSide extends Side {
     constructor() {
-        super('Human', true);
+        super('Human', Species.HUMAN, true);
     }
 
     setup(scene, board) {

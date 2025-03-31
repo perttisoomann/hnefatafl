@@ -19,7 +19,14 @@ class VikingChess extends Phaser.Scene {
         this.goldGroup = null; // Group to hold gold pieces
         this.playerGold = 0;
         this.infoPanel = null;
-        this.sides = [new HumanSide(), new MonsterSide()];
+
+        const player = new HumanSide();
+        const enemy = new MonsterSide();
+
+        player.addOpposition(enemy);
+        enemy.addOpposition(player);
+
+        this.sides = [enemy, player];
         this.activeSide = 0;
         this.animationCheckCounter = 0;
         this.state = null;
@@ -99,7 +106,7 @@ class VikingChess extends Phaser.Scene {
                 this.waitForActionsToComplete(GameState.GET_MOVE);
                 break;
             case GameState.GET_MOVE:
-                if (!this.sides[this.activeSide].isHuman) {
+                if (!this.sides[this.activeSide].isPlayerControlled) {
                     this.enemyTurn();
                 }
                 break;
@@ -331,7 +338,7 @@ class VikingChess extends Phaser.Scene {
     }
 
     selectPiece(piece) {
-        if (!this.sides[this.activeSide].isHuman) return;
+        if (!this.sides[this.activeSide].isPlayerControlled) return;
 
         if (!(piece instanceof PlayerPiece)) return;
 
@@ -1164,7 +1171,7 @@ class VikingChess extends Phaser.Scene {
 
     checkWinConditions() {
         for (let i = 0; i < this.sides.length; i++) {
-            if (this.sides[i].isHuman) {
+            if (this.sides[i].isPlayerControlled) {
                 if (this.sides[i].pieces.length === 0) {
                     this.endGame("Enemy Wins! All defenders are captured!", false);
                     return true;
