@@ -32,9 +32,9 @@ class KingPiece extends PlayerPiece {
     getValidMoves() {
         let moves = [];
         const directions = [
-            [-1, -1], [-1, 0], [-1, 1],
-            [0, -1],         [0, 1],
-            [1, -1], [1, 0], [1, 1]
+            [-1, 0],
+            [0, -1],[0, 1],
+            [1, 0],
         ];
 
         directions.forEach(([dx, dy]) => {
