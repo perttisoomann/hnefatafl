@@ -38,8 +38,7 @@ class MonsterSide extends Side {
     {
         this.objectives = [];
 
-        // TODO: capture human king
-
+        this.objectives.push(new KingCaptured(this));
         this.objectives.push(new EliminateOpposition(this));
     }
 }

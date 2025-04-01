@@ -1,5 +1,6 @@
 const GameState = Object.freeze({
     PASSIVE_MOVES: "passiveMoves",
+    PASSIVE_MOVE_CHECK: "passiveCheckConditions",
     GET_MOVE: "getMove",
     MOVE_PIECE: "movePiece",
     CHECK_CAPTURES: "checkCaptures",
@@ -104,7 +105,12 @@ class VikingChess extends Phaser.Scene {
         switch (this.state) {
             case GameState.PASSIVE_MOVES:
                 this.processPassiveTurn();
-                this.waitForActionsToComplete(GameState.GET_MOVE);
+                this.waitForActionsToComplete(GameState.PASSIVE_MOVE_CHECK);
+                break;
+            case GameState.PASSIVE_MOVE_CHECK:
+                if (!this.wereObjectivesAchieved()) {
+                    this.processState(GameState.GET_MOVE);
+                }
                 break;
             case GameState.GET_MOVE:
                 if (!this.sides[this.activeSide].isPlayerControlled) {
@@ -121,8 +127,9 @@ class VikingChess extends Phaser.Scene {
                 this.waitForActionsToComplete(GameState.NEXT_TURN);
                 break;
             case GameState.NEXT_TURN:
-                this.checkWinConditions();
-                this.nextSide();
+                if (!this.wereObjectivesAchieved()) {
+                    this.nextSide();
+                }
                 break;
         }
     }
@@ -805,108 +812,6 @@ class VikingChess extends Phaser.Scene {
         return map;
     }
 
-    executeEnemyMove(piece, newRow, newCol) {
-        piece.isMoving();
-
-        // Update the board data
-        this.board.tiles[piece.row][piece.col].piece = null;
-        this.board.tiles[newRow][newCol].piece = piece;
-
-        // Get start and end positions
-        const startPos = this.board.getTilePosition(piece.row, piece.col);
-        const endPos = this.board.getTilePosition(newRow, newCol);
-
-        // Calculate the path through each tile
-        const path = [];
-
-        // Determine if moving horizontally or vertically
-        const isHorizontal = piece.row === newRow;
-
-        if (isHorizontal) {
-            // Horizontal movement
-            const direction = piece.col < newCol ? 1 : -1;
-
-            for (let col = piece.col + direction; direction > 0 ? col <= newCol : col >= newCol; col += direction) {
-                path.push(this.board.getTilePosition(piece.row, col));
-            }
-        } else {
-            // Vertical movement
-            const direction = piece.row < newRow ? 1 : -1;
-
-            for (let row = piece.row + direction; direction > 0 ? row <= newRow : row >= newRow; row += direction) {
-                path.push(this.board.getTilePosition(row, piece.col));
-            }
-        }
-
-        // Create a timeline for the movement animation
-        const timeline = this.tweens.createTimeline();
-
-        // Add hop animations through each tile in the path
-        path.forEach((pos, index) => {
-            const hopDuration = 100; // Base duration for each hop
-
-            // Add a hop tween for this tile
-            timeline.add({
-                targets: piece.sprite,
-                x: pos.x,
-                y: function(t, target, key, value, progress) {
-                    // Base y position at this point in the path
-                    const baseY = pos.y;
-
-                    // Add hop using sine curve (up to 20px at peak)
-                    const hopHeight = 20;
-                    const hop = -Math.sin(progress * Math.PI) * hopHeight;
-
-                    // Return position that keeps the base at the same level
-                    return baseY + hop;
-                },
-                rotation: {
-                    value: index % 2 === 0 ? 0.1 : -0.1, // Alternate slight rotation
-                    ease: 'Sine.easeInOut'
-                },
-                duration: hopDuration
-            });
-        });
-
-        // Add final position and rotation reset
-        timeline.add({
-            targets: piece.sprite,
-            x: endPos.x,
-            y: endPos.y,
-            rotation: 0,
-            duration: 100,
-            onComplete: () => {
-                // Update piece position
-                piece.row = newRow;
-                piece.col = newCol;
-
-                // Update info panel if piece is currently hovered
-                if (piece === this.hoveredPiece) {
-                    this.showPieceInfo(piece);
-                }
-
-                // Check for captures
-                this.checkCaptures(piece);
-
-                // Check win conditions
-                if (this.checkWinConditions()) {
-                    return; // Game is over
-                }
-
-                // Switch turns back to passive player turn
-                this.gameState = 'passivePlayerTurn';
-                this.statusText.setText('Passive Player Turn');
-                this.updateStatusText();
-
-                // Process passive player turn
-                this.processPassivePlayerTurn();
-            }
-        });
-
-        // Start the timeline
-        timeline.play();
-    }
-
     evaluateMove(piece, row, col) {
         let score = 0;
 
@@ -1171,7 +1076,7 @@ class VikingChess extends Phaser.Scene {
         this.goldGroup.add(gold);
     }
 
-    checkWinConditions() {
+    wereObjectivesAchieved() {
         console.log('STATE: Check objectives.');
 
         let gameFinished = false;
@@ -1192,35 +1097,6 @@ class VikingChess extends Phaser.Scene {
 
             return gameFinished;
         });
-
-        return false;
-
-        for (let i = 0; i < this.sides.length; i++) {
-            if (this.sides[i].isPlayerControlled) {
-
-                const king = this.sides[i].pieces.find(item => item instanceof KingPiece);
-
-                if (!king) {
-                    this.endGame("Enemy Wins! King is captured!", false);
-                    return true;
-                }
-
-                const kingRow = king.row;
-                const kingCol = king.col;
-                const boardSize = this.board.rows - 1; // Assuming square board
-
-                const isCorner =
-                    (kingRow === 0 && kingCol === 0) ||  // Top-left corner
-                    (kingRow === 0 && kingCol === boardSize) ||  // Top-right corner
-                    (kingRow === boardSize && kingCol === 0) ||  // Bottom-left corner
-                    (kingRow === boardSize && kingCol === boardSize);  // Bottom-right corner
-
-                if (isCorner) {
-                    this.endGame("Player Wins! King escaped!");
-                    return true;
-                }
-            }
-        }
 
         return false;
     }
