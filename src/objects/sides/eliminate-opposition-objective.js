@@ -1,7 +1,10 @@
 class EliminateOpposition extends GameObjective
 {
     constructor(side, enemiesLeft = 0) {
-        super(side,'Eliminate opposition pieces');
+        super(
+            side,
+            'Eliminate opposition pieces',
+            side.isPlayerControlled ? 'Player Wins! All attackers are defeated!' : 'Enemy Wins! All defenders are captured!');
         this.enemiesLeft = enemiesLeft;
     }
 

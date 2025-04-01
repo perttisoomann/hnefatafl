@@ -1170,10 +1170,34 @@ class VikingChess extends Phaser.Scene {
     }
 
     checkWinConditions() {
+        console.log('STATE: Check objectives.');
+
+        let gameFinished = false;
+        this.sides.forEach(side => {
+            side.objectives.some(objective => {
+
+                if (objective.isAchieved()) {
+                    console.log('SIDE: ' + objective.side.name + ' Check: ' + objective.name + ' (ACHIEVED)');
+                    gameFinished = true;
+                    this.endGame(objective.message, side.isPlayerControlled);
+                    return true;
+                }
+
+                console.log('SIDE: ' + objective.side.name + ' Check: ' + objective.name);
+
+                return false;
+            });
+
+            return gameFinished;
+        });
+
+        return false;
+
         for (let i = 0; i < this.sides.length; i++) {
             if (this.sides[i].isPlayerControlled) {
                 if (this.sides[i].pieces.length === 0) {
                     this.endGame("Enemy Wins! All defenders are captured!", false);
+
                     return true;
                 }
 
@@ -1210,6 +1234,7 @@ class VikingChess extends Phaser.Scene {
     }
 
     endGame(message, playerWon = true) {
+        console.log('endGame', message, playerWon);
         this.gameState = 'gameOver';
         this.statusText.setText(message);
 
