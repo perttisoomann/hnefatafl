@@ -32,7 +32,13 @@ class HumanSide extends Side {
     {
         this.objectives = [];
 
-        // TODO: King reaches corners
+        const escapePositions = [
+            [0, 0],
+            [scene.board.rows - 1, 0],
+            [0, scene.board.cols - 1],
+            [scene.board.rows - 1, scene.board.cols - 1],
+        ];
+        this.objectives.push(new KingEscapes(this, escapePositions));
 
         this.objectives.push(new EliminateOpposition(this, 1));
     }

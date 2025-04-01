@@ -1195,11 +1195,6 @@ class VikingChess extends Phaser.Scene {
 
         for (let i = 0; i < this.sides.length; i++) {
             if (this.sides[i].isPlayerControlled) {
-                if (this.sides[i].pieces.length === 0) {
-                    this.endGame("Enemy Wins! All defenders are captured!", false);
-
-                    return true;
-                }
 
                 const king = this.sides[i].pieces.find(item => item instanceof KingPiece);
 
@@ -1220,11 +1215,6 @@ class VikingChess extends Phaser.Scene {
 
                 if (isCorner) {
                     this.endGame("Player Wins! King escaped!");
-                    return true;
-                }
-            } else {
-                if (this.sides[i].pieces.length === 0) {
-                    this.endGame("Player Wins! All attackers are defeated!");
                     return true;
                 }
             }
