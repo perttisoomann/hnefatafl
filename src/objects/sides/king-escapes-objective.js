@@ -12,7 +12,6 @@ class KingEscapes extends GameObjective {
         }
 
         for (const king of kingPieces) {
-            console.log(king);
             for (const position of this.positions) {
                 if (king.row === position[0] && king.col === position[1]) {
                     return true;

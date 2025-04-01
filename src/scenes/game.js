@@ -4,7 +4,8 @@ const GameState = Object.freeze({
     MOVE_PIECE: "movePiece",
     CHECK_CAPTURES: "checkCaptures",
     AWAIT_ACTIONS: "awaitActions",
-    NEXT_TURN: "nextTurn"
+    NEXT_TURN: "nextTurn",
+    NEXT_ROUND: "nextRound",
 });
 
 class VikingChess extends Phaser.Scene {
@@ -382,6 +383,7 @@ class VikingChess extends Phaser.Scene {
     }
 
     movePiece(piece, newRow, newCol) {
+        piece.sprite.clearTint();
         piece.inAction = true;
         piece.isMoving();
 
@@ -1224,7 +1226,6 @@ class VikingChess extends Phaser.Scene {
     }
 
     endGame(message, playerWon = true) {
-        console.log('endGame', message, playerWon);
         this.gameState = 'gameOver';
         this.statusText.setText(message);
 
@@ -1276,6 +1277,8 @@ class VikingChess extends Phaser.Scene {
             this.cleanup();
             this.scene.restart();
         });
+
+        this.processState(GameState.NEXT_ROUND);
     }
 
     resetGameWithCurrentPlayerPieces() {
