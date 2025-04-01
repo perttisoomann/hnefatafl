@@ -1,4 +1,4 @@
-class EliminateOppositionObjective extends GameObjective
+class EliminateOpposition extends GameObjective
 {
     constructor(side, enemiesLeft = 0) {
         super(side,'Eliminate opposition pieces');

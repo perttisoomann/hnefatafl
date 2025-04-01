@@ -34,6 +34,6 @@ class HumanSide extends Side {
 
         // TODO: King reaches corners
 
-        this.objectives.push(new EliminateOppositionObjective(this, 1));
+        this.objectives.push(new EliminateOpposition(this, 1));
     }
 }
