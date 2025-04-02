@@ -156,7 +156,7 @@ class VikingChess extends Phaser.Scene {
             this.activeSide = 0;
         }
 
-        this.processState(GameState.PASSIVE_MOVES);
+        this.delayForAction(GameState.PASSIVE_MOVES);
     }
 
     // Create the information panel
