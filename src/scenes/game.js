@@ -5,6 +5,7 @@ const GameState = Object.freeze({
     MOVE_PIECE: "movePiece",
     CHECK_CAPTURES: "checkCaptures",
     AWAIT_ACTIONS: "awaitActions",
+    DELAY: "delay",
     NEXT_TURN: "nextTurn",
     NEXT_ROUND: "nextRound",
 });
@@ -92,10 +93,7 @@ class VikingChess extends Phaser.Scene {
         // Create info panel on the right side
         this.createInfoPanel();
 
-        // Process the passive player turn as soon as the game starts
-        // this.processPassivePlayerTurn();
-
-        this.processState(GameState.GET_MOVE);
+        this.delayForAction(GameState.GET_MOVE, 45);
     }
 
     processState(state) {
@@ -132,6 +130,13 @@ class VikingChess extends Phaser.Scene {
                 }
                 break;
         }
+    }
+
+    delayForAction(nextState, counter = 30) {
+        this.state = GameState.DELAY;
+        this.nextState = nextState;
+        this.animationCheckCounter = counter;
+        console.log('SIDE: ' + this.sides[this.activeSide].name + ' STATE: ' + this.state);
     }
 
     waitForActionsToComplete(nextState, counter = 15) {
@@ -1271,6 +1276,14 @@ class VikingChess extends Phaser.Scene {
                 } else {
                     this.processState(this.nextState);
                 }
+            }
+        }
+
+        if (this.state === GameState.DELAY) {
+            this.animationCheckCounter -= 1;
+
+            if (this.animationCheckCounter <= 0) {
+                this.processState(this.nextState);
             }
         }
     }
