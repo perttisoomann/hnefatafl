@@ -129,6 +129,8 @@ class VikingChess extends Phaser.Scene {
                     this.nextSide();
                 }
                 break;
+            case GameState.NEXT_ROUND:
+                break;
         }
     }
 
@@ -1103,11 +1105,10 @@ class VikingChess extends Phaser.Scene {
             return gameFinished;
         });
 
-        return false;
+        return gameFinished;
     }
 
     endGame(message, playerWon = true) {
-        this.gameState = 'gameOver';
         this.statusText.setText(message);
 
         if (playerWon) {
