@@ -1167,21 +1167,13 @@ class VikingChess extends Phaser.Scene {
         // Clean up everything except player pieces
         if (this.restartButton) this.restartButton.destroy();
 
-        if (this.enemyPieces) {
-            this.enemyPieces.forEach(piece => piece.cleanup());
-        }
-
         if (this.winGraphic) this.winGraphic.destroy();
         if (this.goldGroup) this.goldGroup.destroy(true, true);
         this.tweens.killAll();
 
         // Reset game state
-        this.gameState = 'playerTurn';
         this.selectedPiece = null;
         this.goldGroup = this.add.group();
-
-        // Update status text
-        this.statusText.setText('Player Turn');
 
         // Reset board (but don't destroy it)
         this.board.resetBoard();
@@ -1204,60 +1196,7 @@ class VikingChess extends Phaser.Scene {
             [centerRow + 1, centerCol + 1],
         ];
 
-        this.playerPieces.forEach((piece, index) => {
-            if (index < centerPositions.length) {
-                const [newRow, newCol] = centerPositions[index];
-                piece.row = newRow;
-                piece.col = newCol;
-                piece.heal(1);
-                const { x, y } = this.board.getTilePosition(newRow, newCol);
-                piece.sprite.setPosition(x, y);
-                this.board.tiles[newRow][newCol].piece = piece;
-            }
-        });
-
-        // Recreate king in center if it was captured
-        if (!this.kingPiece.sprite || !this.kingPiece.sprite.active) {
-            this.kingPiece = new KingPiece(this, this.board, centerRow, centerCol);
-        } else {
-            this.kingPiece.row = centerRow;
-            this.kingPiece.col = centerCol;
-            const { x, y } = this.board.getTilePosition(centerRow, centerCol);
-            this.kingPiece.sprite.setPosition(x, y);
-            this.kingPiece.heal(1);
-            this.board.tiles[centerRow][centerCol].piece = this.kingPiece;
-        }
-
-        // Recreate enemy pieces in original positions
-        this.enemyPieces = [];
-        let enemyPositions = [
-            // Top
-            [0, centerCol - 1],
-            [0, centerCol],
-            [0, centerCol + 1],
-
-            // Bottom
-            [this.board.rows - 1, centerCol - 1],
-            [this.board.rows - 1, centerCol],
-            [this.board.rows - 1, centerCol + 1],
-        ];
-        enemyPositions.forEach(([row, col]) => {
-            this.enemyPieces.push(new EnemyPiece(this, this.board, row, col));
-        });
-
-        enemyPositions = [
-            // Left
-            [centerRow, 0],
-
-            // Right
-            [centerRow, this.board.cols - 1],
-        ];
-        enemyPositions.forEach(([row, col]) => {
-            this.enemyPieces.push(new EnemyPiece(this, this.board, row, col, 2));
-        });
-
-        // Process the passive player turn to start the new game
-        this.processPassivePlayerTurn();
+        this.delayForAction(GameState.GET_MOVE, 45);
     }
 
     update() {
