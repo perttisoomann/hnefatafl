@@ -6,16 +6,21 @@ class Piece {
         this.row = row;
         this.col = col;
         let { x, y } = board.getTilePosition(row, col);
-        this.sprite = scene.add.sprite(x, y, texture).setOrigin(0.5).setDisplaySize(board.tileSize, board.tileSize);
-        this.canReceivePassiveBonus = true;
+
+        this.levelConfig = this.getLevelConfig();
+
         this.level = 1;
         this.maxHealth = 1;
         this.health = 1;
         this.attack = 1;
-        this.hasMoved = false;
         this.attackMultiplier = 1;
         this.survivalMultiplier = 1;
+
+        this.hasMoved = false;
         this.inAction = false;
+        this.isGainingXP = false;
+
+        this.sprite = scene.add.sprite(x, y, texture).setOrigin(0.5).setDisplaySize(board.tileSize, board.tileSize);
 
         this.sprite.setInteractive();
         this.sprite.on('pointerdown', () => scene.selectPiece(this));
@@ -31,6 +36,20 @@ class Piece {
 
         this.attackIcons = [];
         this.createAttackIcons();
+    }
+
+    getLevelConfig() {
+        return {
+            1: {
+                xpRequired: 0,
+                texture: "",
+                maxHealth: 1,
+                health: 1,
+                attack: 1,
+                attackMultiplier: 1,
+                survivalMultiplier: 1,
+            }
+        };
     }
 
     getValidMoves() {
