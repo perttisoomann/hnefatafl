@@ -33,8 +33,6 @@ class Piece {
         this.inAction = false;
         this.canLevelUp = false;
 
-
-
         this.sprite.setInteractive();
         this.sprite.on('pointerdown', () => scene.selectPiece(this));
 

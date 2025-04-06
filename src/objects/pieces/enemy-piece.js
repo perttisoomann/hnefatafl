@@ -1,7 +1,6 @@
 class EnemyPiece extends Piece {
     constructor(scene, board, side, row, col, level = 1) {
         super(scene, board, side, row, col, level);
-        this.canLevelUp = false;
 
         switch (level) {
             case 1:
@@ -9,27 +8,20 @@ class EnemyPiece extends Piece {
                 break;
 
             case 2:
-                this.maxHealth = 2;
-                this.health = this.maxHealth;
                 this.survivalMultiplier = 0.25;
                 break;
 
             case 3:
-                this.maxHealth = 2;
-                this.health = this.maxHealth;
-                this.attack = 2;
                 this.survivalMultiplier = 0.5;
                 break;
         }
-
-        this.createHearts();
     }
 
     getLevelConfig() {
         return {
             1: {
                 xpRequired: 0,
-                texture: "enempy_piece",
+                texture: "enemy_piece",
                 maxHealth: 1,
                 attack: 1,
                 attackMultiplier: 1,
@@ -38,16 +30,16 @@ class EnemyPiece extends Piece {
             },
             2: {
                 xpRequired: 0,
-                texture: "enempy_piece_level2",
-                maxHealth: 2,
-                attack: 1,
+                texture: "enemy_piece_level2",
+                maxHealth: 1,
+                attack: 2,
                 attackMultiplier: 1,
                 survivalMultiplier: 1,
                 moveRange: 66,
             },
             3: {
                 xpRequired: 0,
-                texture: "enempy_piece_level3",
+                texture: "enemy_piece_level3",
                 maxHealth: 2,
                 attack: 2,
                 attackMultiplier: 1,
