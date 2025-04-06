@@ -9,7 +9,7 @@ class HumanSide extends Side {
 
         this.addPiece(new KingPiece(scene, board, this, centerRow, centerCol, 1));
 
-        const playerPositions = [
+        let playerPositions = [
             // Cardinal directions
             [centerRow - 1, centerCol],
             [centerRow, centerCol - 1],
@@ -17,14 +17,22 @@ class HumanSide extends Side {
             [centerRow + 1, centerCol],
 
             // Diagonals
-            [centerRow - 1, centerCol - 1],
             [centerRow - 1, centerCol + 1],
             [centerRow + 1, centerCol - 1],
-            [centerRow + 1, centerCol + 1],
         ];
 
         playerPositions.forEach(([row, col]) => {
             this.addPiece(new PlayerPiece(scene, board, this, row, col, 1));
+        });
+
+        playerPositions = [
+            // Diagonals
+            [centerRow - 1, centerCol - 1],
+            [centerRow + 1, centerCol + 1],
+        ];
+
+        playerPositions.forEach(([row, col]) => {
+            this.addPiece(new ShieldmaidenPiece(scene, board, this, row, col, 1));
         });
     }
 
