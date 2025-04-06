@@ -7,7 +7,7 @@ class HumanSide extends Side {
         const centerCol = Math.floor(board.cols / 2);
         const centerRow = Math.floor(board.rows / 2);
 
-        this.addPiece(new KingPiece(scene, board, this, centerRow, centerCol));
+        this.addPiece(new KingPiece(scene, board, this, centerRow, centerCol, 1));
 
         const playerPositions = [
             // Cardinal directions
@@ -24,7 +24,7 @@ class HumanSide extends Side {
         ];
 
         playerPositions.forEach(([row, col]) => {
-            this.addPiece(new PlayerPiece(scene, board, this, row, col));
+            this.addPiece(new PlayerPiece(scene, board, this, row, col, 1));
         });
     }
 

@@ -1,5 +1,5 @@
 class Piece {
-    constructor(scene, board, side, row, col, texture) {
+    constructor(scene, board, side, row, col, level) {
         this.scene = scene;
         this.board = board;
         this.side = side;
@@ -9,18 +9,31 @@ class Piece {
 
         this.levelConfig = this.getLevelConfig();
 
-        this.level = 1;
         this.maxHealth = 1;
         this.health = 1;
         this.attack = 1;
+        this.moveRange = 66;
         this.attackMultiplier = 1;
         this.survivalMultiplier = 1;
+        this.texture = null;
+        this.xp = 0;
+
+        this.sprite = scene.add.sprite(x, y, this.texture).setOrigin(0.5).setDisplaySize(board.tileSize, board.tileSize);
+
+        this.hearts = [];
+        this.createHearts();
+
+        this.attackIcons = [];
+        this.createAttackIcons();
+
+        this.level = level;
+        this.setLevel(this.level);
 
         this.hasMoved = false;
         this.inAction = false;
-        this.isGainingXP = false;
+        this.canLevelUp = false;
 
-        this.sprite = scene.add.sprite(x, y, texture).setOrigin(0.5).setDisplaySize(board.tileSize, board.tileSize);
+
 
         this.sprite.setInteractive();
         this.sprite.on('pointerdown', () => scene.selectPiece(this));
@@ -30,12 +43,87 @@ class Piece {
         this.sprite.on('pointerout', () => scene.clearHoveredPiece(this));
 
         board.tiles[row][col].piece = this;
+    }
 
-        this.hearts = [];
+    gainXP() {
+        if (!this.canLevelUp) {
+            return;
+        }
+
+        this.xp += 1;
+        this.checkLevelUp();
+        this.showXpGainAnimation();
+    }
+
+    checkLevelUp() {
+        const nextLevel = this.level + 1;
+        if (this.levelConfig[nextLevel] && this.xp >= this.levelConfig[nextLevel].xpRequired) {
+            this.setLevel(nextLevel);
+            this.showLevelUpAnimation();
+        }
+    }
+
+    setLevel(newLevel) {
+        const config = this.levelConfig[newLevel];
+        if (!config) return; // Invalid level
+
+        this.level = newLevel;
+        this.texture = config.texture;
+
+        if (this.sprite) {
+            this.sprite.setTexture(config.texture).setOrigin(0.5).setDisplaySize(this.board.tileSize, this.board.tileSize);
+        }
+
+        this.maxHealth = config.maxHealth;
+        this.health = this.maxHealth;
+
+        this.attack = config.attack;
+        this.moveRange = config.moveRange;
+
         this.createHearts();
-
-        this.attackIcons = [];
         this.createAttackIcons();
+    }
+
+    showXpGainAnimation() {
+        const floatingText = this.scene.add.text(
+            this.sprite.x,
+            this.sprite.y - 20,
+            '+1',
+            { fontSize: '20px', fill: '#ffff00', stroke: '#000', strokeThickness: 3 }
+        ).setOrigin(0.5);
+
+        this.scene.tweens.add({
+            targets: floatingText,
+            y: this.sprite.y - 60,
+            alpha: 0,
+            scale: 1.5,
+            duration: 1000,
+            ease: 'Power1',
+            onComplete: () => {
+                floatingText.destroy();
+            }
+        });
+    }
+
+    showLevelUpAnimation() {
+        //Add animation for level up here, for example particle effect, or different text animation.
+        const levelUpText = this.scene.add.text(
+            this.sprite.x,
+            this.sprite.y - 40,
+            `Level Up!`,
+            {fontSize: '24px', fill: '#00ff00', stroke: '#000', strokeThickness: 3}
+        ).setOrigin(0.5);
+
+        this.scene.tweens.add({
+            targets: levelUpText,
+            y: this.sprite.y - 80,
+            alpha: 0,
+            duration: 2500,
+            ease: 'Power2',
+            onComplete: () =>{
+                levelUpText.destroy();
+            }
+        })
     }
 
     getLevelConfig() {

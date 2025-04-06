@@ -1,11 +1,7 @@
 class KingPiece extends PlayerPiece {
-    constructor(scene, board, side, row, col) {
-        super(scene, board, side, row, col, 'king_piece');
-        this.xp = 0; // Initialize XP for king piece too
-        this.xpText = null;
+    constructor(scene, board, side, row, col, level) {
+        super(scene, board, side, row, col, level);
         this.name = generateVikingName();
-        this.maxHealth = 2;
-        this.health = this.maxHealth;
 
         this.sprite.on('pointerover', () => {
             if (scene.selectedPiece !== this) {
@@ -17,15 +13,37 @@ class KingPiece extends PlayerPiece {
                 this.sprite.clearTint();
             }
         });
-
-        this.createHearts();
     }
 
     getLevelConfig() {
         return {
-            1: { xpRequired: 0, texture: 'king_piece', bonus: {} },
-            2: { xpRequired: 4, texture: 'king_piece_level2', bonus: { health: 2, moveRange: 1 } },
-            3: { xpRequired: 8, texture: 'king_piece_level3', bonus: { attack: 2, health: 1, moveRange: 2 } },
+            1: {
+                xpRequired: 0,
+                texture: "king_piece",
+                maxHealth: 2,
+                attack: 1,
+                attackMultiplier: 1,
+                survivalMultiplier: 1,
+                moveRange: 1,
+            },
+            2: {
+                xpRequired: 4,
+                texture: "pawn_piece_level2",
+                maxHealth: 3,
+                attack: 2,
+                attackMultiplier: 1,
+                survivalMultiplier: 1,
+                moveRange: 2,
+            },
+            3: {
+                xpRequired: 8,
+                texture: "pawn_piece_level3",
+                maxHealth: 6,
+                attack: 4,
+                attackMultiplier: 1,
+                survivalMultiplier: 1,
+                moveRange: 4,
+            }
         };
     }
 

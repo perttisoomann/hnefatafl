@@ -1,19 +1,7 @@
 class EnemyPiece extends Piece {
     constructor(scene, board, side, row, col, level = 1) {
-        let texture = 'enemy_piece';
-
-        switch (level) {
-            case 2:
-                texture = 'enemy_piece_level2';
-                break;
-            case 3:
-                texture = 'enemy_piece_level3';
-                break;
-        }
-
-        super(scene, board, side, row, col, texture);
-
-        this.level = level;
+        super(scene, board, side, row, col, level);
+        this.canLevelUp = false;
 
         switch (level) {
             case 1:
@@ -35,6 +23,38 @@ class EnemyPiece extends Piece {
         }
 
         this.createHearts();
+    }
+
+    getLevelConfig() {
+        return {
+            1: {
+                xpRequired: 0,
+                texture: "enempy_piece",
+                maxHealth: 1,
+                attack: 1,
+                attackMultiplier: 1,
+                survivalMultiplier: 1,
+                moveRange: 66,
+            },
+            2: {
+                xpRequired: 0,
+                texture: "enempy_piece_level2",
+                maxHealth: 2,
+                attack: 1,
+                attackMultiplier: 1,
+                survivalMultiplier: 1,
+                moveRange: 66,
+            },
+            3: {
+                xpRequired: 0,
+                texture: "enempy_piece_level3",
+                maxHealth: 2,
+                attack: 2,
+                attackMultiplier: 1,
+                survivalMultiplier: 1,
+                moveRange: 66,
+            }
+        };
     }
 
     getValidMoves() {
