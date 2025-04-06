@@ -1012,6 +1012,8 @@ class VikingChess extends Phaser.Scene {
     }
 
     resetGameWithCurrentPlayerPieces() {
+        console.log("STATE: --- Moving to the next round ---");
+
         // Clean up everything except player pieces
         if (this.restartButton) this.restartButton.destroy();
 
@@ -1023,26 +1025,22 @@ class VikingChess extends Phaser.Scene {
         this.selectedPiece = null;
         this.goldGroup = this.add.group();
 
-        // Reset board (but don't destroy it)
         this.board.resetBoard();
 
-        const centerCol = Math.floor(this.board.cols / 2);
-        const centerRow = Math.floor(this.board.rows / 2);
+        this.sides[0].cleanup();
+        this.sides[0] = undefined;
 
-        // Move remaining player pieces to the center
-        const centerPositions = [
-            // Cardinal directions
-            [centerRow - 1, centerCol],
-            [centerRow, centerCol - 1],
-            [centerRow, centerCol + 1],
-            [centerRow + 1, centerCol],
+        const enemy = new MonsterSide();
 
-            // Diagonals
-            [centerRow - 1, centerCol - 1],
-            [centerRow - 1, centerCol + 1],
-            [centerRow + 1, centerCol - 1],
-            [centerRow + 1, centerCol + 1],
-        ];
+        this.sides[1].addOpposition(enemy);
+        enemy.addOpposition(this.sides[1]);
+        enemy.setup(this, this.board);
+
+        this.sides[0] = enemy;
+        this.sides[1].resetPieces();
+
+        this.activeSide = 0;
+        this.animationCheckCounter = 0;
 
         this.delayForAction(GameState.GET_MOVE, 45);
     }

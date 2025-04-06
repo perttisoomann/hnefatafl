@@ -5,6 +5,8 @@ class Piece {
         this.side = side;
         this.row = row;
         this.col = col;
+        this.originalRow = row;
+        this.originalCol = col;
         let { x, y } = board.getTilePosition(row, col);
 
         this.levelConfig = this.getLevelConfig();
@@ -259,5 +261,16 @@ class Piece {
 
         this.attackIcons.forEach(heart => heart.destroy()); // Destroy hearts
         this.attackIcons = [];
+    }
+
+    returnToOriginalPosition() {
+        this.row = this.originalRow;
+        this.col = this.originalCol;
+        this.board.tiles[this.row][this.col].piece = this;
+        const newPos = this.board.getTilePosition(this.row, this.col);
+        this.x = newPos.x;
+        this.y = newPos.y;
+        this.sprite.x = this.x;
+        this.sprite.y = this.y;
     }
 }

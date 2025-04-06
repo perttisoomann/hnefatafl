@@ -33,4 +33,15 @@ class Side {
     addFriendly(side) {
         this.friendlies.push(side);
     }
+
+    resetPieces() {
+        this.pieces.forEach((piece) => { piece.returnToOriginalPosition(); })
+    }
+
+    cleanup() {
+        this.pieces.forEach(piece => {
+            piece.cleanup();
+            piece = undefined;
+        });
+    }
 }

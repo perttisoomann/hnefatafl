@@ -7,6 +7,8 @@ class MonsterSide extends Side {
         const centerCol = Math.floor(board.cols / 2);
         const centerRow = Math.floor(board.rows / 2);
 
+        // Comment out for dev work
+        /*
         let enemyPositions = [
             // Top
             [0, centerCol - 1],
@@ -22,7 +24,9 @@ class MonsterSide extends Side {
             this.addPiece(new EnemyPiece(scene, board, this, row, col));
         });
 
-        enemyPositions = [
+         */
+
+        let enemyPositions = [
             // Left
             [centerRow, 0],
 
