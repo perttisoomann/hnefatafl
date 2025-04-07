@@ -33,16 +33,31 @@ class Piece {
 
         this.hasMoved = false;
         this.inAction = false;
+        this.spentForRound = false;
         this.canLevelUp = false;
 
         this.sprite.setInteractive();
-        this.sprite.on('pointerdown', () => scene.selectPiece(this));
+        this.sprite.on('pointerdown', () => {
+            if (!this.spentForRound) {
+                scene.selectPiece(this);
+            }
+        });
 
         // Add hover event listeners
         this.sprite.on('pointerover', () => scene.setHoveredPiece(this));
         this.sprite.on('pointerout', () => scene.clearHoveredPiece(this));
 
         board.tiles[row][col].piece = this;
+    }
+
+    clearSpentForRound() {
+        this.spentForRound = false;
+        this.sprite.clearTint();
+    }
+
+    spentForThisRound() {
+        this.spentForRound = true;
+        this.sprite.setTint(0x666666);
     }
 
     gainXP() {

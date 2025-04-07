@@ -42,6 +42,10 @@ class Side {
         this.pieces.forEach((piece) => { piece.heal(amount); })
     }
 
+    clearSpentForRount() {
+        this.pieces.forEach(piece => piece.clearSpentForRound());
+    }
+
     cleanup() {
         this.pieces.forEach(piece => {
             piece.cleanup();

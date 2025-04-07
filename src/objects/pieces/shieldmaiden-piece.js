@@ -3,19 +3,6 @@ class ShieldmaidenPiece extends PlayerPiece {
         super(scene, board, side, row, col, level);
         this.canLevelUp = true;
         this.name = generateVikingName();
-
-        this.sprite.on('pointerover', () => {
-            if (scene.selectedPiece !== this) {
-                this.sprite.setTint(0x00ff00);
-            }
-        });
-        this.sprite.on('pointerout', () => {
-            if (scene.selectedPiece !== this) {
-                this.sprite.clearTint();
-            }
-        });
-
-        this.createHearts();
     }
 
     getLevelConfig() {

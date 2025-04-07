@@ -19,7 +19,11 @@ class PlayerPiece extends Piece {
         });
         this.sprite.on('pointerout', () => {
             if (scene.selectedPiece !== this) {
-                this.sprite.clearTint();
+                if (this.spentForRound) {
+                    this.sprite.setTint(0x666666);
+                } else {
+                    this.sprite.clearTint();
+                }
             }
         });
     }

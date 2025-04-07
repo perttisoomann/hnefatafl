@@ -117,6 +117,7 @@ class VikingChess extends Phaser.Scene {
                 }
                 break;
             case GameState.MOVE_PIECE:
+                this.sides[this.activeSide].pieces.forEach(piece => piece.clearSpentForRound());
                 this.board.clearHighlights();
                 this.movePiece(this.selectedPiece, this.selectedRow, this.selectedCol);
                 this.waitForActionsToComplete(GameState.CHECK_CAPTURES);
@@ -239,7 +240,7 @@ class VikingChess extends Phaser.Scene {
                     && side2Piece.side === this.sides[this.activeSide]
                 ) {
                     capturesFound = true;
-                    this.performAttackAnimation(side1Piece, side2Piece, enemyPiece);
+                    this.performAttackAnimation(side1Piece, side2Piece, enemyPiece, true);
                     break;
                 }
             }
@@ -535,7 +536,9 @@ class VikingChess extends Phaser.Scene {
         let allMoves = [];
 
         this.sides[this.activeSide].pieces.forEach(piece => {
-            if (!piece.sprite.active) return; // Skip captured pieces
+            if (!piece.sprite.active || piece.spentForRound) {
+                return;
+            }
 
             const validMoves = piece.getValidMoves();
             validMoves.forEach(([row, col]) => {
@@ -802,7 +805,7 @@ class VikingChess extends Phaser.Scene {
         return;
     }
 
-    performAttackAnimation(piece1, piece2, targetPiece) {
+    performAttackAnimation(piece1, piece2, targetPiece, disableForRound = false) {
         piece1.isActive = true;
         piece2.isActive = true;
         targetPiece.isActive = true;
@@ -854,6 +857,9 @@ class VikingChess extends Phaser.Scene {
             yoyo: true,
             onComplete: () => {
                 piece1.isActive = false;
+                if (disableForRound) {
+                    piece1.spentForThisRound();
+                }
                 createBloodEffect();
             }
         });
@@ -869,6 +875,9 @@ class VikingChess extends Phaser.Scene {
             delay: 50,
             onComplete: () => {
                 piece2.isActive = false;
+                if (disableForRound) {
+                    piece2.spentForThisRound();
+                }
                 createBloodEffect();
                 this.capturePiece(targetPiece, attackerPieces);
             }
