@@ -1038,6 +1038,7 @@ class VikingChess extends Phaser.Scene {
 
         this.sides[0] = enemy;
         this.sides[1].resetPieces();
+        this.sides[1].healPeaces();
 
         this.activeSide = 0;
         this.animationCheckCounter = 0;

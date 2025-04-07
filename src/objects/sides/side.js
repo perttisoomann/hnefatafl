@@ -38,6 +38,10 @@ class Side {
         this.pieces.forEach((piece) => { piece.returnToOriginalPosition(); })
     }
 
+    healPeaces(amount = 1) {
+        this.pieces.forEach((piece) => { piece.heal(amount); })
+    }
+
     cleanup() {
         this.pieces.forEach(piece => {
             piece.cleanup();

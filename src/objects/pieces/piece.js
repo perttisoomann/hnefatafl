@@ -231,8 +231,36 @@ class Piece {
     }
 
     heal(amount) {
-        this.health = Math.min(this.health + amount, this.maxHealth);
-        this.updateHearts();
+        const newHealth = Math.min(this.health + amount, this.maxHealth);
+
+        if (newHealth !== this.health) {
+            const healthDelta = newHealth - this.health;
+            this.health = newHealth;
+
+            this.showHealAnimation(healthDelta);
+
+            this.updateHearts();
+        }
+    }
+
+    showHealAnimation(healthDelta) {
+        const healthText = this.scene.add.text(
+            this.sprite.x,
+            this.sprite.y - 40,
+            "+" + healthDelta + "HP",
+            {fontSize: '24px', fill: '#ff0000', stroke: '#000', strokeThickness: 3}
+        ).setOrigin(0.5);
+
+        this.scene.tweens.add({
+            targets: healthText,
+            y: this.sprite.y - 80,
+            alpha: 0,
+            duration: 2500,
+            ease: 'Power2',
+            onComplete: () =>{
+                healthText.destroy();
+            }
+        })
     }
 
     isMoving() {
