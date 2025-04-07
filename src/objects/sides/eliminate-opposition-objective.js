@@ -10,6 +10,7 @@ class EliminateOpposition extends GameObjective
 
     isAchieved() {
         const totalPieces = this.side.opposition.reduce((sum, side) => sum + side.pieces.length, 0);
+        console.log(totalPieces);
         return totalPieces <= this.enemiesLeft;
     }
 }

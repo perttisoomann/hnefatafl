@@ -107,6 +107,7 @@ class VikingChess extends Phaser.Scene {
                 break;
             case GameState.PASSIVE_MOVE_CHECK:
                 if (!this.wereObjectivesAchieved()) {
+                    console.log('passive, Not achieved');
                     this.processState(GameState.GET_MOVE);
                 }
                 break;
@@ -126,6 +127,7 @@ class VikingChess extends Phaser.Scene {
                 break;
             case GameState.NEXT_TURN:
                 if (!this.wereObjectivesAchieved()) {
+                    console.log('active, Not achieved');
                     this.nextSide();
                 }
                 break;
@@ -936,27 +938,36 @@ class VikingChess extends Phaser.Scene {
 
         let gameFinished = false;
         this.sides.forEach(side => {
+            console.log(gameFinished);
+            if (gameFinished) {
+                return;
+            }
+
             side.objectives.some(objective => {
+                console.log(gameFinished);
+                if (gameFinished) {
+                    return;
+                }
 
                 if (objective.isAchieved()) {
                     console.log('SIDE: ' + objective.side.name + ' Check: ' + objective.name + ' (ACHIEVED)');
                     gameFinished = true;
                     this.endGame(objective.message, side.isPlayerControlled);
-                    return true;
+                    return;
                 }
 
                 console.log('SIDE: ' + objective.side.name + ' Check: ' + objective.name);
-
-                return false;
             });
-
-            return gameFinished;
         });
+
+        console.log('final', gameFinished);
 
         return gameFinished;
     }
 
     endGame(message, playerWon = true) {
+        console.log('GAME OVER: ' + message + ' Human: ' + playerWon);
+
         this.statusText.setText(message);
 
         if (playerWon) {
@@ -1007,8 +1018,6 @@ class VikingChess extends Phaser.Scene {
             this.cleanup();
             this.scene.restart();
         });
-
-        this.processState(GameState.NEXT_ROUND);
     }
 
     resetGameWithCurrentPlayerPieces() {
@@ -1042,6 +1051,8 @@ class VikingChess extends Phaser.Scene {
 
         this.activeSide = 0;
         this.animationCheckCounter = 0;
+
+        console.log(this.sides);
 
         this.delayForAction(GameState.GET_MOVE, 45);
     }

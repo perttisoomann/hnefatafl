@@ -47,5 +47,7 @@ class Side {
             piece.cleanup();
             piece = undefined;
         });
+
+        this.pieces = [];
     }
 }
