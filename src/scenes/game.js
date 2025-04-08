@@ -430,72 +430,12 @@ class VikingChess extends Phaser.Scene {
                 }
 
                 piece.inAction = false;
-
-                // this.processState(GameState.CHECK_CAPTURES);
-
-                /*
-                // Clear the selection and highlights
-                if (this.selectedPiece) {
-                    this.selectedPiece.sprite.clearTint();
-                }
-
-                this.selectedPiece = null;
-                this.updateStatusText(); // Update status after move
-
-                 */
-
-                /*
-                // Update info panel if piece is currently hovered
-                if (piece === this.hoveredPiece) {
-                    this.showPieceInfo(piece);
-                }
-
-                // Flag to track if captures are in progress
-                let capturesInProgress = false;
-                let captureAnimationComplete = false;
-
-                // Create a modified checkCaptures that tracks completion
-
-
-                // Function to call after captures are complete
-                const proceedAfterCaptures = () => {
-                    this.processState(GameState.NEXT_TURN);
-                };
-
-                // Hook into the performAttackAnimation method to track completions
-                const originalPerformAttackAnimation = this.performAttackAnimation;
-                this.performAttackAnimation = (piece1, piece2, targetPiece) => {
-                    capturesInProgress = true;
-
-                    // Call original method
-                    originalPerformAttackAnimation.call(this, piece1, piece2, targetPiece);
-
-                    // After a reasonable delay that covers animations, proceed
-                    this.time.delayedCall(800, () => {
-                        capturesInProgress = false;
-                        // If no more captures are in progress, proceed
-                        proceedAfterCaptures();
-                    });
-                };
-
-                // Start the capture checks
-                checkCapturesWithCallback();
-
-                // Restore original method
-                this.time.delayedCall(1500, () => {
-                    this.performAttackAnimation = originalPerformAttackAnimation;
-                });
-
-
-                 */
             }
         });
 
         // Start the timeline
         timeline.play();
     }
-
-    // Rest of the methods remain largely unchanged
 
     setHoveredPiece(piece) {
         this.hoveredPiece = piece;
