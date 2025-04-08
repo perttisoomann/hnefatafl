@@ -58,7 +58,7 @@ class InfoPanel {
                 `Attack: ${piece.attack}\n` +
                 `Movement: One space in any direction`;
         } else if (piece instanceof PlayerPiece) {
-            title = 'Defender ' + piece.name;
+            title = piece.name;
             details = `Protect the king and capture\nenemy pieces.\n\n` +
                 `Experience: ${piece.xp} XP\n` +
                 `Health: ${piece.health}/${piece.maxHealth}\n` +
@@ -70,6 +70,10 @@ class InfoPanel {
                 `Health: ${piece.health}/${piece.maxHealth}\n` +
                 `Attack: ${piece.attack}\n` +
                 `Movement: Any number of spaces\nhorizontally or vertically`;
+        }
+
+        if (piece.spentForRound) {
+            details += `\n\nSPENT FOR THIS ROUND`;
         }
 
         this.title.setText(title);
