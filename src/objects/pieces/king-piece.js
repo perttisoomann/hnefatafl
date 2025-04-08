@@ -14,6 +14,9 @@ class KingPiece extends PlayerPiece {
                 attackMultiplier: 1,
                 survivalMultiplier: 1,
                 moveRange: 1,
+                ability: Ability.STUN,
+                abilityTrigger: AbilityTrigger.ACTIVE,
+                abilityRange: 2,
             },
             2: {
                 xpRequired: 4,
@@ -23,6 +26,9 @@ class KingPiece extends PlayerPiece {
                 attackMultiplier: 1,
                 survivalMultiplier: 1,
                 moveRange: 2,
+                ability: Ability.STUN,
+                abilityTrigger: AbilityTrigger.ACTIVE,
+                abilityRange: 3,
             },
             3: {
                 xpRequired: 8,
@@ -32,6 +38,9 @@ class KingPiece extends PlayerPiece {
                 attackMultiplier: 1,
                 survivalMultiplier: 1,
                 moveRange: 4,
+                ability: Ability.STUN,
+                abilityTrigger: AbilityTrigger.ACTIVE,
+                abilityRange: 4,
             }
         };
     }

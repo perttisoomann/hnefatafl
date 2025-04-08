@@ -15,6 +15,9 @@ class ShieldmaidenPiece extends PlayerPiece {
                 attackMultiplier: 1,
                 survivalMultiplier: 1,
                 moveRange: 66,
+                ability: Ability.PROTECTION,
+                abilityTrigger: AbilityTrigger.PASSIVE,
+                abilityRange: 2,
             },
             2: {
                 xpRequired: 3,
@@ -24,6 +27,9 @@ class ShieldmaidenPiece extends PlayerPiece {
                 attackMultiplier: 1,
                 survivalMultiplier: 1,
                 moveRange: 66,
+                ability: Ability.PROTECTION,
+                abilityTrigger: AbilityTrigger.PASSIVE,
+                abilityRange: 2,
             },
             3: {
                 xpRequired: 6,
@@ -33,6 +39,9 @@ class ShieldmaidenPiece extends PlayerPiece {
                 attackMultiplier: 1,
                 survivalMultiplier: 1,
                 moveRange: 66,
+                ability: Ability.PROTECTION,
+                abilityTrigger: AbilityTrigger.PASSIVE,
+                abilityRange: 3,
             }
         };
     }

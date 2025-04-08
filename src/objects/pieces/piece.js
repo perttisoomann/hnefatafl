@@ -1,3 +1,21 @@
+const Ability = Object.freeze({
+    NONE: "none",
+    PROTECTION: "protection",
+    STUN: "stun",
+});
+
+const AbilityTrigger = Object.freeze({
+    NONE: "none",
+    PASSIVE: "passive",
+    ACTIVE: "active",
+});
+
+// TODO: set up ability icons for each ability, but only display these when piece is selected
+
+// TODO: set up range definition
+
+// TODO: show range when piece is selected or hovered over
+
 class Piece {
     constructor(scene, board, side, row, col, level) {
         this.scene = scene;
@@ -19,6 +37,10 @@ class Piece {
         this.survivalMultiplier = 1;
         this.texture = null;
         this.xp = 0;
+
+        this.ability = Ability.NONE;
+        this.abilityTrigger = AbilityTrigger.NONE;
+        this.abilityRange = 0;
 
         this.sprite = scene.add.sprite(x, y, this.texture).setOrigin(0.5).setDisplaySize(board.tileSize, board.tileSize);
 
@@ -94,6 +116,12 @@ class Piece {
 
         this.attack = config.attack;
         this.moveRange = config.moveRange;
+
+        if (config.ability) {
+            this.ability = config.ability;
+            this.abilityTrigger = config.abilityTrigger;
+            this.abilityRange = config.abilityRange;
+        }
 
         this.createHearts();
         this.createAttackIcons();
