@@ -10,9 +10,36 @@ const AbilityTrigger = Object.freeze({
     ACTIVE: "active",
 });
 
+const Ranges = Object.freeze({
+    1: [
+        [-1, 0],
+        [0, -1], [0, 1],
+        [1, 0]
+    ],
+    2: [
+        [-1, -1], [-1, 0], [-1, 1],
+        [0, -1], [0, 1],
+        [1, -1], [1, 0], [1, 1]
+    ],
+    3: [
+        [-2, 0],
+        [-1, -1], [-1, 0], [-1, 1],
+        [0, -2], [0, -1], [0, 1], [0, 2],
+        [1, -1], [1, 0], [1, 1],
+        [2, 0]
+    ],
+    4: [
+        [-2, -1], [-2, 0], [-2, 1],
+        [-1, -2], [-1, -1], [-1, 0], [-1, 1], [-1, 2],
+        [0, -2], [0, -1], [0, 1], [0, 2],
+        [1, -2], [1, -1], [1, 0], [1, 1], [1, 2],
+        [2, -1], [2, 0], [2, 1]
+    ]
+});
+
 // TODO: set up ability icons for each ability, but only display these when piece is selected
 
-// TODO: set up range definition
+
 
 // TODO: show range when piece is selected or hovered over
 
